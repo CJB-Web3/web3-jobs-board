@@ -99,9 +99,9 @@ export default function PricingSection() {
                   <div className="mt-4">
                     <p className={`text-5xl font-bold ${splineSans.className}`}>
                       <span className="line-through text-muted-foreground">
-                        $200{" "}
+                        $160{" "}
                       </span>
-                      <span> $50 </span>
+                      <span> $80 </span>
                       <span className="text-lg font-normal text-muted-foreground">
                         /post
                       </span>
@@ -151,7 +151,7 @@ export default function PricingSection() {
                       <span className="line-through text-primary-foreground/65">
                         $300{" "}
                       </span>
-                      <span> $100 </span>
+                      <span> $150 </span>
                       <span className="text-lg font-normal opacity-90">
                         /post
                       </span>

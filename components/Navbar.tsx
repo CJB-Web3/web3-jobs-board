@@ -74,7 +74,7 @@ export default function Navbar() {
               <p
                 className={`${audiowide_font.className} font-extrabold tracking-wider text-3xl`}
               >
-                CJB
+                WJB
               </p>
             </Link>
           </motion.div>

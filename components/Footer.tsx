@@ -22,7 +22,7 @@ export default function Footer() {
               <span
                 className={`${audiowide.className} text-primary text-4xl tracking-wider`}
               >
-                CJB
+                WJB
               </span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">

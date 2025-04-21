@@ -9,8 +9,8 @@ import Footer from "@/components/Footer";
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Crypto Jobs Board",
-  description: "Find the Best Jobs On The Market",
+  title: "Web3 Jobs Board | Find Top Web3, Blockchain & Crypto Jobs",
+  description: "Explore the latest Web3 jobs, Blockchain careers & Crypto opportunities on Web3 Jobs Board. Find remote roles in DeFi, NFTs, Marketing & more!",
 };
 
 export default function RootLayout({
