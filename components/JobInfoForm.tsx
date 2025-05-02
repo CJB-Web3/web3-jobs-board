@@ -405,12 +405,6 @@ function JobInfoForm({ handleStep1, defaultValues, handleBack }: Props) {
               )}
             />
 
-            {/* <div className="text-xl font-normal text-purple-400 mt-6 mb-4 flex gap-2 items-center">
-            <HiOutlineCurrencyDollar className="w-6 h-6" />
-            <h3 className="text-xl font-semibold">Compensation</h3>
-          </div> */}
-            {/* 
-          <div className="flex flex-col gap-4"> */}
             <div className="space-y-1">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
@@ -419,7 +413,7 @@ function JobInfoForm({ handleStep1, defaultValues, handleBack }: Props) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel htmlFor="salaryCurrency">
-                        Salary Currency
+                        Salary Currency <span className="text-muted-foreground text-sm font-normal">Optional</span>
                       </FormLabel>
                       <Select
                         onValueChange={field.onChange}
@@ -452,7 +446,7 @@ function JobInfoForm({ handleStep1, defaultValues, handleBack }: Props) {
                   control={control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Minimum Salary</FormLabel>
+                      <FormLabel>Minimum Salary <span className="text-muted-foreground text-sm font-normal">Optional</span></FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -466,13 +460,12 @@ function JobInfoForm({ handleStep1, defaultValues, handleBack }: Props) {
                   )}
                 />
 
-                {/* <span className="text-gray-500">-</span> */}
                 <FormField
                   name="maxSalary"
                   control={control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Maximum Salary</FormLabel>
+                      <FormLabel>Maximum Salary <span className="text-muted-foreground text-sm font-normal">Optional</span></FormLabel>
                       <FormControl>
                         <Input
                           {...field}

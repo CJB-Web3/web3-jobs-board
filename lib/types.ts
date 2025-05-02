@@ -77,11 +77,11 @@ export type JobData = {
   geographicRestrictions?: string;
   timezoneRestrictions?: string;
   keywords?: string;
-  salaryCurrency?: "USD" | "EUR" | "GBP";
-  minSalary?: string;
-  maxSalary?: string;
-  minEquity?: string;
-  maxEquity?: string;
+  salaryCurrency?: "USD" | "EUR" | "GBP" | null;
+  minSalary?: string | null;
+  maxSalary?: string | null;
+  minEquity?: string | null;
+  maxEquity?: string | null;
   paymentMethod?: "Cash" | "Cryptocurrency" | "Cash/Crypto";
   applyMethod?: "website" | "email";
   applyEmail?: string;

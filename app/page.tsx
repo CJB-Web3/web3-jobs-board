@@ -12,24 +12,24 @@ const SITE_URL = "https://www.web3jobsboard.com";
 export async function generateMetadata(): Promise<Metadata> {
   const keywords = await getJobKeywords();
   const description =
-    "Browse and post Web3 & blockchain job listings—remote engineering, design, marketing and more on Web3JobsBoard.";
+    "Browse and post Web3 & crypto job listings—remote engineering, design, marketing and more on Web3JobsBoard.";
   return {
-    title: "Web3JobsBoard | Web3 & Blockchain Careers",
+    title: "Web3 Jobs Board | Web3 & Crypto Careers",
     description,
     keywords: keywords.join(", "),
     alternates: { canonical: SITE_URL },
     openGraph: {
-      title: "Web3JobsBoard | Web3 & Blockchain Careers",
+      title: "Web3 Jobs Board | Web3 & Crypto Careers",
       description,
       url: SITE_URL,
-      siteName: "Web3JobsBoard",
+      siteName: "Web3 Jobs Board",
       images: [{ url: `${SITE_URL}/og-image.png`, width: 1200, height: 630 }],
       locale: "en_US",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "Web3JobsBoard | Web3 & Blockchain Careers",
+      title: "Web3 Jobs Board | Web3 & Crypto Careers",
       description,
       images: [`${SITE_URL}/og-image.png`],
       site: "@Web3JobsBoard",

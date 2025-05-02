@@ -116,7 +116,7 @@ export default function Footer() {
 
         <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Crypto Jobs Board. All rights reserved.
+            &copy; {new Date().getFullYear()} Web3 Jobs Board. All rights reserved.
           </p>
           <p
             className={`${splineSans.className} text-sm font-semibold text-primary mt-2 md:mt-0`}

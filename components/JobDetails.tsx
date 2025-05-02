@@ -36,11 +36,7 @@ const createParserOptions = (): HTMLReactParserOptions => ({
           domToReact(domNode.children as DOMNode[], createParserOptions()) // Recursively parse children
         );
       }
-       // You can still add rules for other tags like <p>, <ul>, <li> here if needed
-       // Example:
-       // if (domNode.name === 'p') {
-       //   return <p className="mb-2">{domToReact(domNode.children as DOMNode[], createParserOptions())}</p>;
-       // }
+
     }
     return undefined; // Default handling for other nodes
   },

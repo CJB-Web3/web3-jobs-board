@@ -64,6 +64,7 @@ function FormPreview({ formData, onBack, handleStep2 }: Props) {
   };
 
   const getSalaryRange = () => {
+    // Check if both salary values and currency exist before rendering
     if (minSalary && maxSalary && salaryCurrency) {
       return `${formatSalaryCurrency(Number(minSalary), salaryCurrency)} 
            - ${formatSalaryCurrency(Number(maxSalary), salaryCurrency)}`;
@@ -102,6 +103,7 @@ function FormPreview({ formData, onBack, handleStep2 }: Props) {
   };
 
   const equityRange = getEquityRange();
+  const hasSalaryInfo = Boolean(minSalary || maxSalary);
 
   return (
     <Card className="bg-gradient-to-br from-background to-secondary/10">
@@ -168,18 +170,21 @@ function FormPreview({ formData, onBack, handleStep2 }: Props) {
               <span className="text-base text-foreground">{getJobType()}</span>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-1">
-                <CircleDollarSign className="w-5 h-5 text-primary" />
-                <p className="text-sm text-muted-foreground">
-                  Compensation Range
-                </p>
-              </div>
+            {/* Only show salary section if there's any salary information */}
+            {hasSalaryInfo && (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-1">
+                  <CircleDollarSign className="w-5 h-5 text-primary" />
+                  <p className="text-sm text-muted-foreground">
+                    Compensation Range
+                  </p>
+                </div>
 
-              <span className="text-base text-foreground">
-                {getSalaryRange()}
-              </span>
-            </div>
+                <span className="text-base text-foreground">
+                  {getSalaryRange()}
+                </span>
+              </div>
+            )}
 
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-1">

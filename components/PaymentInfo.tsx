@@ -76,8 +76,8 @@ export default function PaymentInfo({ handleBack, handleStep3 }: Props) {
                           <RadioGroupItem value="pkg-1" />
                         </FormControl>
                         <FormLabel className="font-normal">
-                          Basic - <span className="line-through">$200</span>{" "}
-                          <span>$50</span>
+                          Basic - <span className="line-through">$160</span>{" "}
+                          <span>$80</span>
                         </FormLabel>
                       </FormItem>
 
@@ -87,7 +87,7 @@ export default function PaymentInfo({ handleBack, handleStep3 }: Props) {
                         </FormControl>
                         <FormLabel className="font-normal">
                           Featured - <span className="line-through">$300</span>{" "}
-                          <span>$100</span>
+                          <span>$150</span>
                         </FormLabel>
                       </FormItem>
                     </RadioGroup>

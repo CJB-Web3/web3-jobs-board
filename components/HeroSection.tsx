@@ -19,15 +19,15 @@ export default function HeroSection() {
           <div
             className={`animate-slide-in-top flex flex-col gap-7 text-4xl font-semibold text-accent-foreground sm:text-5xl md:text-7xl ${anta.className}`}
           >
-            <h1>Finding The Right Talent</h1>
+            <h1>Hiring The Right Talent</h1>
             <h1 className="bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-500 bg-clip-text text-transparent dark:from-indigo-500 dark:via-purple-500 dark:to-pink-400">
               Made Simple
             </h1>
           </div>
           <h2
-            className={`mt-3 mx-auto max-w-md animate-slide-in-top text-base sm:text-lg md:mt-5 md:text-lg md:max-w-3xl ${spline.className}`}
+            className={`mt-3 mx-auto max-w-md animate-slide-in-top text-base sm:text-lg md:mt-5 md:text-lg md:max-w-3xl ${spline.className} tracking-wider`}
           >
-            Build the Decentralized Future: Find Your Dream Role.
+            Build the Decentralized Future: Find Your Dream Role & Kickstart Your Crypto Career.
           </h2>
 
           <nav

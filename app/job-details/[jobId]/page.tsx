@@ -4,14 +4,22 @@ import { Metadata } from "next";
 
 const SITE_URL = "https://www.web3jobsboard.com";
 
-export async function generateMetadata({ params }: { params: { jobId: string } }): Promise<Metadata> {
-  const id = Number(params.jobId);
+export async function generateMetadata({ 
+  params 
+}: { 
+  params: { jobId: string } 
+}): Promise<Metadata> {
+  const resolvedParams = await Promise.resolve(params);
+  const id = Number(resolvedParams.jobId);
   const job = await getJobById(id);
+  
   if (!job) {
     return { title: "Job Not Found | Web3JobsBoard" };
   }
+  
   const description = job.jobDescription?.slice(0, 160).replace(/<[^>]+>/g, '') || '';
   const keywords = await getJobKeywords();
+  
   return {
     title: `${job.jobTitle} at ${job.companyName} | Web3JobsBoard`,
     description,
@@ -34,8 +42,15 @@ export async function generateMetadata({ params }: { params: { jobId: string } }
   };
 }
 
-export default async function Page({ params }: { params: { jobId: string } }) {
-  const job = await getJobById(Number(params.jobId));
+export default async function Page({ 
+  params 
+}: { 
+  params: { jobId: string } 
+}) {
+ 
+  const resolvedParams = await Promise.resolve(params);
+  const job = await getJobById(Number(resolvedParams.jobId));
+  
   return (
     <main className="min-h-screen max-w-7xl mx-auto px-4 mt-36 mb-20" role="main">
       {job ? <JobDetails job={job} /> : (

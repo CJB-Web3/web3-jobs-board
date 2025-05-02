@@ -32,19 +32,9 @@ export const jobFormSchema = z
     geographicRestrictions: z.string().optional(),
     timezoneRestrictions: z.string().optional(),
     keywords: z.string().min(1, "Keywords are required."),
-    salaryCurrency: z.enum(["USD", "EUR", "GBP"], {
-      required_error: "Please select a salary currency",
-    }),
-    minSalary: z
-      .string({
-        required_error: "Please provide a minimum salary",
-      })
-      .regex(/^\d+$/, { message: "This number must be a positive number" }),
-    maxSalary: z
-      .string({
-        required_error: "Please provide a maximum salary",
-      })
-      .regex(/^\d+$/, { message: "This number must be a positive number" }),
+    salaryCurrency: z.enum(["USD", "EUR", "GBP"]).optional(),
+    minSalary: z.string().optional(),
+    maxSalary: z.string().optional(),
     minEquity: z.string().optional(),
     maxEquity: z.string().optional(),
     paymentMethod: z.enum(["Cash", "Cryptocurrency", "Hybrid"], {
@@ -68,9 +58,7 @@ export const jobFormSchema = z
       ),
   })
   .superRefine((data, ctx) => {
-    // Only validate equity if either field is provided
     if (data.minEquity || data.maxEquity) {
-      // Validate format if minEquity is provided
       if (data.minEquity && !/^\d+(\.\d{1,2})?$/.test(data.minEquity)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -79,7 +67,7 @@ export const jobFormSchema = z
         });
       }
       
-      // Validate format if maxEquity is provided
+
       if (data.maxEquity && !/^\d+(\.\d{1,2})?$/.test(data.maxEquity)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -88,7 +76,7 @@ export const jobFormSchema = z
         });
       }
 
-      // Only validate min/max relationship if both are provided
+
       if (data.minEquity && data.maxEquity) {
         if (Number(data.maxEquity) <= Number(data.minEquity)) {
           ctx.addIssue({
@@ -98,6 +86,44 @@ export const jobFormSchema = z
           });
         }
       }
+    }
+    
+
+    if (data.minSalary && data.maxSalary) {
+      if (!/^\d+$/.test(data.minSalary)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "This number must be a positive number",
+          path: ["minSalary"],
+        });
+      }
+      
+   
+      if (!/^\d+$/.test(data.maxSalary)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "This number must be a positive number",
+          path: ["maxSalary"],
+        });
+      }
+
+     
+      if (Number(data.maxSalary) <= Number(data.minSalary)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Maximum salary should be more than minimum salary",
+          path: ["maxSalary"],
+        });
+      }
+    }
+    
+    
+    if ((data.minSalary || data.maxSalary) && !data.salaryCurrency) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Please select a salary currency",
+        path: ["salaryCurrency"],
+      });
     }
   })
   .refine(
@@ -160,10 +186,6 @@ export const jobFormSchema = z
       path: ["timezoneRestrictions"],
     }
   )
-  .refine((data) => Number(data.maxSalary) > Number(data.minSalary), {
-    message: "Maximum salary should be more than minimum salary",
-    path: ["maxSalary"],
-  })
   .refine(
     (data) =>
       data.partTime || data.fullTime || data.freelance || data.internship,

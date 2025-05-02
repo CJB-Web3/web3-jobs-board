@@ -54,6 +54,9 @@ export default function JobCard({
     }
     return "Not specified";
   };
+  
+  // Check if job has any salary information
+  const hasSalaryInfo = Boolean(job.minSalary || job.maxSalary);
 
   return (
     <Card
@@ -125,22 +128,25 @@ export default function JobCard({
                   {getJobType()}
                 </span>
               </span>
-              <span className="flex items-center">
-                <CircleDollarSign
-                  className={`mr-1 w-4 h-4 ${
-                    job.featured ? "text-primary-foreground" : "text-primary"
-                  }`}
-                />
-                <span
-                  className={
-                    job.featured
-                      ? "text-primary-foreground"
-                      : "text-foreground"
-                  }
-                >
-                  {getSalaryRange()}
+              {/* Only display salary info if it exists */}
+              {hasSalaryInfo && (
+                <span className="flex items-center">
+                  <CircleDollarSign
+                    className={`mr-1 w-4 h-4 ${
+                      job.featured ? "text-primary-foreground" : "text-primary"
+                    }`}
+                  />
+                  <span
+                    className={
+                      job.featured
+                        ? "text-primary-foreground"
+                        : "text-foreground"
+                    }
+                  >
+                    {getSalaryRange()}
+                  </span>
                 </span>
-              </span>
+              )}
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {job.keywords?.split(",").map((keyword, index) => (
@@ -150,7 +156,7 @@ export default function JobCard({
                   className={`rounded-sm px-3 py-1 text-xs font-medium ${
                     job.featured
                       ? "border-primary-foreground/30 text-primary-foreground"
-                      : "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground"
+                      : "bg-primary/10 text-primary dark:bg-primary/30 dark:text-primary-foreground"
                   }`}
                 >
                   {keyword.trim()}
@@ -163,7 +169,7 @@ export default function JobCard({
               <DialogTrigger asChild>
                 <Button
                   variant={job.featured ? "secondary" : "default"}
-                  className={`${
+                  className={`w-full sm:w-auto ${
                     job.featured
                       ? "bg-primary-foreground text-primary hover:bg-primary-foreground/90"
                       : "bg-primary text-primary-foreground hover:bg-primary/90"

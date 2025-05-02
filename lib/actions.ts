@@ -33,14 +33,14 @@ export async function createJobPosting(newJob: any) {
 
   if (newJob.paymentCurrency === "eur") {
     amount = newJob.featured
-      ? await getPriceInEUR(100)
-      : await getPriceInEUR(50);
+      ? await getPriceInEUR(150)
+      : await getPriceInEUR(80);
   } else if (newJob.paymentCurrency === "gbp") {
     amount = newJob.featured
-      ? await getPriceInGBP(100)
-      : await getPriceInGBP(50);
+      ? await getPriceInGBP(150)
+      : await getPriceInGBP(80);
   } else {
-    amount = newJob.featured ? 100 : 50;
+    amount = newJob.featured ? 150 : 80;
   }
 
   if (newJob.minEquity === "") {
@@ -49,6 +49,14 @@ export async function createJobPosting(newJob: any) {
 
   if (newJob.maxEquity === "") {
     newJob.maxEquity = null;
+  }
+
+  if (newJob.minSalary === "") {
+    newJob.minSalary = null;
+  }
+
+  if (newJob.maxSalary === "") {
+    newJob.maxSalary = null;
   }
 
   // 1. Insert the new job into the database
