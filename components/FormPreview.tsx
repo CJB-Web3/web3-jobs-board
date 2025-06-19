@@ -18,6 +18,8 @@ import {
   Handshake,
   ScrollText,
   Wallet,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { Righteous } from "next/font/google";
 import ReactHtmlParser from "react-html-parser";
@@ -222,9 +224,9 @@ function FormPreview({ formData, onBack, handleStep2 }: Props) {
 
       <CardFooter className="p-6 flex justify-between bg-background/80 backdrop-blur-sm">
         <Button variant="outline" onClick={onBack}>
-          &larr; Go Back
+        <ChevronLeft className="h-4 w-4" /> Go Back
         </Button>
-        <Button onClick={handleStep2}>Payment &rarr;</Button>
+        <Button onClick={handleStep2}>Payment <ChevronRight className="h-4 w-4" /></Button>
       </CardFooter>
     </Card>
   );

@@ -22,8 +22,6 @@ export async function getPriceInGBP(amount: number) {
 }
 
 export async function createJobPosting(newJob: any) {
-  let amount;
-
   const comLogoName = `${Math.random()}-${newJob.companyLogo.name}`.replaceAll(
     "/",
     ""
@@ -31,17 +29,8 @@ export async function createJobPosting(newJob: any) {
 
   const comLogoUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/companyLogo/${comLogoName}`;
 
-  if (newJob.paymentCurrency === "eur") {
-    amount = newJob.featured
-      ? await getPriceInEUR(150)
-      : await getPriceInEUR(80);
-  } else if (newJob.paymentCurrency === "gbp") {
-    amount = newJob.featured
-      ? await getPriceInGBP(150)
-      : await getPriceInGBP(80);
-  } else {
-    amount = newJob.featured ? 150 : 80;
-  }
+  // For crypto payments, we'll use USD pricing only
+  const amount = newJob.featured ? 150 : 80;
 
   if (newJob.minEquity === "") {
     newJob.minEquity = null;
@@ -59,50 +48,8 @@ export async function createJobPosting(newJob: any) {
     newJob.maxSalary = null;
   }
 
-  // 1. Insert the new job into the database
-  const { data, error } = await supabase
-    .from("jobs")
-    .insert([{ ...newJob, companyLogo: comLogoUrl, payableAmount: amount }])
-    .select();
-  if (error) {
-    throw error;
-  }
-
-  if (!data || data.length === 0) {
-    throw new Error("Failed to create job posting");
-  }
-
-  const job = data[0] as JobData;
-  const { id, paymentCurrency } = job;
-
-  // 2. Create a Stripe PaymentIntent
-
   try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Number(amount) * 100,
-      currency: paymentCurrency,
-      metadata: {
-        jobId: id,
-      },
-    });
-
-    if (!paymentIntent.client_secret) {
-      throw new Error("Stripe failed to create payment intent");
-    }
-
-    // 3. Update the job posting with the PaymentIntent ID
-    const { data, error: updateError } = await supabase
-      .from("jobs")
-      .update({ paymentIntentId: paymentIntent.id })
-      .eq("id", id)
-      .select("*")
-      .single();
-
-    if (updateError) {
-      throw updateError;
-    }
-
-    // 4. Upload the company logo
+    // 1. Upload the company logo first
     const { error: uploadError } = await supabase.storage
       .from("companyLogo")
       .upload(
@@ -115,15 +62,60 @@ export async function createJobPosting(newJob: any) {
 
     if (uploadError) throw uploadError;
 
-    // 5. Return the client secret
+    // 2. Insert the new job into the database with paymentStatus as "unpaid"
+    const { data, error } = await supabase
+      .from("jobs")
+      .insert([{ 
+        ...newJob, 
+        companyLogo: comLogoUrl, 
+        payableAmount: amount,
+        paymentStatus: "unpaid",
+        paymentMethod: "Cryptocurrency"
+      }])
+      .select();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      throw new Error("Failed to create job posting");
+    }
+
+    const job = data[0] as JobData;
+
+    // Return the job data without client secret (no Stripe)
     return {
-      clientSecret: paymentIntent.client_secret,
-      job: data as JobData,
+      clientSecret: "crypto", // Dummy value for compatibility
+      job: job,
     };
-  } catch (stripeError) {
-    // If Stripe fails, delete the job posting
-    await supabase.from("jobs").delete().eq("id", id);
-    throw stripeError;
+  } catch (error) {
+    console.error("Error creating job posting:", error);
+    throw error;
+  }
+}
+
+export async function updateJobPaymentStatus(jobId: number, transactionHash: string) {
+  try {
+    const { data, error } = await supabase
+      .from("jobs")
+      .update({ 
+        paymentStatus: "paid",
+        transactionHash: transactionHash,
+        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 30 days from now
+      })
+      .eq("id", jobId)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data as JobData;
+  } catch (error) {
+    console.error("Error updating payment status:", error);
+    throw error;
   }
 }
 
@@ -142,18 +134,23 @@ export async function getJobListings() {
   return [...featuredJobs, ...regularJobs] as JobData[];
 }
 
-export async function getJob(id: number) {
-  const { data, error } = await supabase
-    .from("jobs")
-    .select("*")
-    .eq("id", id)
-    .single();
+export async function getJob(jobId: number) {
+  try {
+    const { data, error } = await supabase
+      .from("jobs")
+      .select("*")
+      .eq("id", jobId)
+      .single();
 
-  if (error) {
-    throw error;
+    if (error) {
+      throw error;
+    }
+
+    return data as JobData;
+  } catch (error) {
+    console.error("Error fetching job:", error);
+    return null;
   }
-
-  return data as JobData;
 }
 
 export async function getCompanies() {

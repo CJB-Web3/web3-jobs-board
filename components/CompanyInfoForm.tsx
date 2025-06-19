@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import {ChevronRight} from "lucide-react";
 
 type Props = {
   defaultValues: CompanyForm;
@@ -399,7 +400,7 @@ export default function CompanyInfoForm({ defaultValues, handleStep0 }: Props) {
           </CardContent>
 
           <CardFooter className="mt-2 flex justify-end">
-            <Button type="submit">Next &rarr;</Button>
+            <Button type="submit">Next <ChevronRight className="h-4 w-4" /></Button>
           </CardFooter>
         </form>
       </Form>

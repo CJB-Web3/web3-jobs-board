@@ -36,7 +36,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-
+import {ChevronLeft, ChevronRight} from "lucide-react";
 type Props = {
   handleStep1: (data: JobForm) => void;
   defaultValues: JobForm;
@@ -649,9 +649,9 @@ function JobInfoForm({ handleStep1, defaultValues, handleBack }: Props) {
 
           <CardFooter className="mt-2 flex justify-between">
             <Button type="button" variant={"outline"} onClick={handleBack}>
-              &larr; Go back
+              <ChevronLeft className="h-4 w-4" /> Go back
             </Button>
-            <Button type="submit">Preview &rarr;</Button>
+            <Button type="submit">Preview <ChevronRight className="h-4 w-4" /></Button>
           </CardFooter>
         </form>
       </Form>

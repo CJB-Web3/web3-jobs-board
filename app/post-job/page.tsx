@@ -3,7 +3,7 @@ import JobListingForm from "@/components/JobListingForm";
 import { Suspense } from 'react'; // Import Suspense for dynamic loading fallback
 
 export const metadata: Metadata = {
-  title: 'Post a Web3 Job | Web3 Jobs Board - List Your Blockchain Vacancy',
+  title: 'Post a Job | Web3 Jobs Board - List Your Blockchain Vacancy',
   description: 'Recruit top talent in the blockchain & Web3 space. Post your job opening on Web3 Jobs Board today – reach developers, marketers, designers, and more.',
   keywords: 'post web3 job, post blockchain job, hire web3 talent, blockchain recruitment, crypto jobs, web3 careers, list job vacancy, web3 job board',
   openGraph: {

@@ -74,7 +74,7 @@ export default function JobCard({
       <CardContent className="p-6 relative pb-14 md:pb-6">
         <div className="flex flex-col md:flex-row md:items-start">
           <div className="mb-4 md:mb-0">
-            <Avatar className="h-14 w-14 ring-2 ring-primary/20">
+            <Avatar className="h-14 w-14 ring-2 ring-primary/10 dark:ring-primary">
               <AvatarImage src={job.companyLogo} alt={job.companyName} />
               <AvatarFallback>{job.companyName?.[0]}</AvatarFallback>
             </Avatar>

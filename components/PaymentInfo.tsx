@@ -16,25 +16,36 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { paymentFormSchema } from "@/lib/schemas";
 import { PaymentForm } from "@/lib/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
-import { HiOutlineCreditCard } from "react-icons/hi2";
+import { FaBitcoin } from "react-icons/fa";
 import { z } from "zod";
 
 type Props = {
   handleBack: () => void;
   handleStep3: (values: PaymentForm) => void;
+  submissionError: string | null; // Accept the error message
 };
 
-export default function PaymentInfo({ handleBack, handleStep3 }: Props) {
+export default function PaymentInfo({
+  handleBack,
+  handleStep3,
+  submissionError,
+}: Props) {
   const form = useForm<z.infer<typeof paymentFormSchema>>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
       jobPkg: "pkg-1",
-      paymentCurrency: "usd",
+      paymentCurrency: "usd", // Keep for compatibility but won't be used
     },
   });
 
@@ -50,11 +61,11 @@ export default function PaymentInfo({ handleBack, handleStep3 }: Props) {
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardHeader>
             <CardTitle className="flex gap-2 items-center">
-              <HiOutlineCreditCard className="w-6 h-6" />
+              <FaBitcoin className="w-6 h-6" />
               <p>Payment Information</p>
             </CardTitle>
             <CardDescription>
-              Please fill up the fields with your relevant job details
+              Select your package and pay with cryptocurrency
             </CardDescription>
           </CardHeader>
 
@@ -97,45 +108,28 @@ export default function PaymentInfo({ handleBack, handleStep3 }: Props) {
               )}
             />
 
-            <FormField
-              control={control}
-              name="paymentCurrency"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel>Select your payment currency</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex flex-col gap-2"
-                    >
-                      <FormItem className="flex items-center space-x-2 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="usd" />
-                        </FormControl>
-                        <FormLabel className="font-normal">USD</FormLabel>
-                      </FormItem>
-
-                      <FormItem className="flex items-center space-x-2 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="eur" />
-                        </FormControl>
-                        <FormLabel className="font-normal">EUR</FormLabel>
-                      </FormItem>
-
-                      <FormItem className="flex items-center space-x-2 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="gbp" />
-                        </FormControl>
-                        <FormLabel className="font-normal">GBP</FormLabel>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <h4 className="font-medium mb-2">Payment Methods Accepted:</h4>
+              <ul className="text-sm space-y-1">
+                <li>• USDC, USDT, or DAI</li>
+                <li>
+                  • Networks: Ethereum, Polygon, BNB Chain, Base (Testnet)
+                </li>
+                <li>• Connect your wallet in the next step</li>
+              </ul>
+            </div>
           </CardContent>
+
+          {/* This is the new error display section */}
+          {submissionError && (
+            <div className="px-6 pb-4">
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Submission Failed</AlertTitle>
+                <AlertDescription>{submissionError}</AlertDescription>
+              </Alert>
+            </div>
+          )}
 
           <CardFooter className="mt-2 flex justify-between">
             <Button type="button" variant="outline" onClick={handleBack}>
