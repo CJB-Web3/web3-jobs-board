@@ -129,8 +129,7 @@ export default function PaymentCheckoutForm({ job }: Props) {
 
   // Get payment amount based on package
   const getPaymentAmount = () => {
-    // return job.featured ? 150 : 80;
-    return 0.1;
+      return job.featured ? 150 : 80;
   };
 
   useEffect(() => {
@@ -149,7 +148,6 @@ export default function PaymentCheckoutForm({ job }: Props) {
   // Handle confirmation errors
   useEffect(() => {
     if (confirmError) {
-      console.error('Confirmation error:', confirmError);
       setError('Transaction failed during confirmation');
       setPaymentStep('error');
     }
@@ -163,7 +161,6 @@ export default function PaymentCheckoutForm({ job }: Props) {
       const updatedJob = await updateJobPaymentStatus(job.id, transactionHash);
       setFinalJobData(updatedJob || job);
     } catch (err) {
-      console.error('Error updating payment status:', err);
       // Still show success since payment went through
       setFinalJobData(job);
     }
@@ -540,7 +537,7 @@ export default function PaymentCheckoutForm({ job }: Props) {
           <Button
             onClick={handlePayment}
             disabled={!isConnected || !selectedToken}
-            className="w-full"
+            className={`w-full ${spline_sans_reg.className}`}
             size="lg"
           >
             Confirm Payment

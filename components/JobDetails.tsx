@@ -59,14 +59,19 @@ function DetailItem({ icon: Icon, label, value }: { icon: any, label: string, va
   );
 }
 
-// Keywords component (remains the same)
+// Keywords component (FIXED)
 function Keywords({ keywords }: { keywords?: string }) {
-  if (!keywords) return null;
-
+  // Always call useMemo at the top level.
   const keywordList = useMemo(() =>
-    keywords.split(",").map(k => k.trim()),
+    // Handle conditional logic inside the hook.
+    keywords ? keywords.split(",").map(k => k.trim()) : [],
     [keywords]
   );
+
+  // Conditionally render null after the hook call.
+  if (keywordList.length === 0) {
+    return null;
+  }
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -106,62 +111,62 @@ function SafeHTMLContent({ html }: { html: string | undefined }) {
 // Main JobDetails component (rest remains the same)
 export default function JobDetails({ job }: { job: JobData }) {
   // useMemo hooks remain the same
-    const jobType = useMemo(() => {
-        if (job.fullTime) return "Full-time";
-        if (job.partTime) return "Part-time";
-        if (job.freelance) return "Freelance";
-        if (job.internship) return "Internship";
-        return "Not specified";
-      }, [job.fullTime, job.partTime, job.freelance, job.internship]);
+  const jobType = useMemo(() => {
+    if (job.fullTime) return "Full-time";
+    if (job.partTime) return "Part-time";
+    if (job.freelance) return "Freelance";
+    if (job.internship) return "Internship";
+    return "Not specified";
+  }, [job.fullTime, job.partTime, job.freelance, job.internship]);
 
-      const salaryRange = useMemo(() => {
-        if (job.minSalary && job.maxSalary && job.salaryCurrency) {
-          return `${formatSalaryCurrency(
-            Number(job.minSalary),
-            job.salaryCurrency
-          )} - ${formatSalaryCurrency(
-            Number(job.maxSalary),
-            job.salaryCurrency
-          )}`;
-        }
-        return "Not specified";
-      }, [job.minSalary, job.maxSalary, job.salaryCurrency]);
+  const salaryRange = useMemo(() => {
+    if (job.minSalary && job.maxSalary && job.salaryCurrency) {
+      return `${formatSalaryCurrency(
+        Number(job.minSalary),
+        job.salaryCurrency
+      )} - ${formatSalaryCurrency(
+        Number(job.maxSalary),
+        job.salaryCurrency
+      )}`;
+    }
+    return "Not specified";
+  }, [job.minSalary, job.maxSalary, job.salaryCurrency]);
 
-      const equityRange = useMemo(() => {
-        if (job.minEquity != null && job.maxEquity != null) {
-          return `${job.minEquity}% - ${job.maxEquity}%`;
-        }
-        return null;
-      }, [job.minEquity, job.maxEquity]);
+  const equityRange = useMemo(() => {
+    if (job.minEquity != null && job.maxEquity != null) {
+      return `${job.minEquity}% - ${job.maxEquity}%`;
+    }
+    return null;
+  }, [job.minEquity, job.maxEquity]);
 
-      const locationDetails = useMemo(() => {
-         const loc = job.jobLocation;
-         switch (loc) {
-           case "onsite":
-             return `On site - ${job.locationDetails || ""}`;
-           case "remote":
-             if (job.remoteOption === "global") return "Remote - Global";
-             if (job.remoteOption === "geographic") return `Remote - ${job.geographicRestrictions || ""}`;
-             if (job.remoteOption === "timezone") return `Remote - ${job.timezoneRestrictions || ""}`;
-             return "Remote";
-           case "hybrid":
-             const baseText = `On site or Remote - ${job.locationDetails || ""}`;
-             if (job.remoteOption === "global") return `${baseText}, Global`;
-             if (job.remoteOption === "geographic") return `${baseText}, ${job.geographicRestrictions || ""}`;
-             if (job.remoteOption === "timezone") return `${baseText}, ${job.timezoneRestrictions || ""}`;
-             return baseText;
-         }
-         return "Not specified";
-       }, [job.jobLocation, job.locationDetails, job.remoteOption, job.geographicRestrictions, job.timezoneRestrictions]);
+  const locationDetails = useMemo(() => {
+    const loc = job.jobLocation;
+    switch (loc) {
+      case "onsite":
+        return `On site - ${job.locationDetails || ""}`;
+      case "remote":
+        if (job.remoteOption === "global") return "Remote - Global";
+        if (job.remoteOption === "geographic") return `Remote - ${job.geographicRestrictions || ""}`;
+        if (job.remoteOption === "timezone") return `Remote - ${job.timezoneRestrictions || ""}`;
+        return "Remote";
+      case "hybrid":
+        const baseText = `On site or Remote - ${job.locationDetails || ""}`;
+        if (job.remoteOption === "global") return `${baseText}, Global`;
+        if (job.remoteOption === "geographic") return `${baseText}, ${job.geographicRestrictions || ""}`;
+        if (job.remoteOption === "timezone") return `${baseText}, ${job.timezoneRestrictions || ""}`;
+        return baseText;
+    }
+    return "Not specified";
+  }, [job.jobLocation, job.locationDetails, job.remoteOption, job.geographicRestrictions, job.timezoneRestrictions]);
 
-      const paymentMethodDisplay = useMemo(() => job.paymentMethod || null, [job.paymentMethod]);
+  const paymentMethodDisplay = useMemo(() => job.paymentMethod || null, [job.paymentMethod]);
 
-      const applyLink = useMemo(() => {
-        if (!job.applyMethod) return "#";
-        return job.applyMethod === "website"
-          ? (job.applyWebsite || "#")
-          : `mailto:${job.applyEmail || ""}`;
-      }, [job.applyMethod, job.applyWebsite, job.applyEmail]);
+  const applyLink = useMemo(() => {
+    if (!job.applyMethod) return "#";
+    return job.applyMethod === "website"
+      ? (job.applyWebsite || "#")
+      : `mailto:${job.applyEmail || ""}`;
+  }, [job.applyMethod, job.applyWebsite, job.applyEmail]);
 
 
   // JSX Structure remains the same
@@ -240,7 +245,7 @@ export default function JobDetails({ job }: { job: JobData }) {
           </h3>
           {/* Applied prose for basic styling, check if dark:prose-invert is needed */}
           <div className="prose prose-sm dark:prose-invert max-w-none text-foreground/80">
-             <SafeHTMLContent html={job.jobDescription} />
+            <SafeHTMLContent html={job.jobDescription} />
           </div>
         </section>
 
