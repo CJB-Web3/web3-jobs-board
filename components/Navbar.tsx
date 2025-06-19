@@ -164,7 +164,7 @@ export default function Navbar() {
 
                   <Button
                     variant={"ghost"}
-                    onClick={() => handleRedirect("/Pricing")}
+                    onClick={() => handleRedirect("/pricing")}
                   >
                     Pricing
                   </Button>
