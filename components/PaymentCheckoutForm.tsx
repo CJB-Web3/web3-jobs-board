@@ -62,7 +62,6 @@ const PAYMENT_RECIPIENT = "0x14fBE93b2E284bd255001390B6D40AE43dda1952";
 const SUPPORTED_TOKENS = ['USDC', 'USDT', 'DAI'] as const;
 type SupportedToken = typeof SUPPORTED_TOKENS[number];
 
-// Token logos from cryptologos.cc - UPDATED PATHS for public directory
 const TOKEN_LOGOS: Record<SupportedToken, string> = {
   USDC: "/tokens/usdc-logo.png",
   USDT: "/tokens/usdt-logo.png",
