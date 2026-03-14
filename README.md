@@ -1,6 +1,6 @@
 # Web3 Jobs Board
 
-Production-focused job board for Web3 hiring, built with Next.js, Supabase, Wagmi/AppKit, and stablecoin checkout.
+A modern job board for Web3 hiring, built with Next.js, Supabase, Wagmi/AppKit, and stablecoin checkout.
 
 ## Stack
 
