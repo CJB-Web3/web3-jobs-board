@@ -1,61 +1,86 @@
-import { Button } from "@/components/ui/button";
-import { Anta, Spline_Sans } from "next/font/google";
 import Link from "next/link";
-import HeroBackground from "./HeroBackground";
 import SmoothScrollToSection from "./SmoothScrollToSection";
-
-const anta = Anta({ subsets: ["latin"], weight: "400" });
-const spline = Spline_Sans({ subsets: ["latin"], weight: "400" });
+import CompanySlider from "./CompanySlider";
 
 export default function HeroSection() {
   return (
     <section
       id="hero"
       aria-label="Hero"
-      className="relative overflow-hidden"
+      className="border-b-4 border-foreground mt-[3.75rem] md:mt-[5.5rem]"
     >
-      <HeroBackground>
-        <div className="max-w-7xl mx-auto px-4 py-16 mt-24 mb-22 sm:px-6 lg:px-8 z-10 text-center">
-          <div
-            className={`animate-slide-in-top flex flex-col gap-7 text-4xl font-semibold text-accent-foreground sm:text-5xl md:text-7xl ${anta.className}`}
-          >
-            <h1>Hiring The Right Talent</h1>
-            <h1 className="bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-500 bg-clip-text text-transparent dark:from-indigo-500 dark:via-purple-500 dark:to-pink-400">
-              Made Simple
-            </h1>
-          </div>
-          <h2
-            className={`mt-3 mx-auto max-w-md animate-slide-in-top text-base sm:text-lg md:mt-5 md:text-lg md:max-w-3xl ${spline.className} tracking-wider`}
-          >
-            Build the Decentralized Future: Find Your Dream Role & Kickstart Your Crypto Career.
+      {/* Masthead */}
+      <div className="border-b-2 border-foreground px-4 sm:px-6 lg:px-8 py-5 text-center">
+        <h1 className="font-headline text-6xl sm:text-8xl md:text-9xl font-black tracking-tight leading-none uppercase">
+          Web3 Jobs Board
+        </h1>
+        <div className="flex items-center gap-4 mt-6 justify-center">
+          <span className="h-px flex-1 max-w-24 bg-foreground" />
+          <p className="font-sans text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+            The Definitive Record of Decentralized Employment
+          </p>
+          <span className="h-px flex-1 max-w-24 bg-foreground" />
+        </div>
+      </div>
+
+      {/* Editorial body — two column on large screens */}
+      <div className="flex flex-col lg:flex-row">
+
+        {/* Left: text + CTAs */}
+        <div className="lg:w-7/12 px-4 sm:px-6 lg:px-8 py-10 lg:border-r lg:border-foreground">
+          {/* Section label */}
+          <p className="font-sans text-[11px] font-bold uppercase tracking-[0.3em] text-[#CC0000] mb-3">
+            ■ Careers &amp; Opportunities
+          </p>
+
+          {/* Lead headline */}
+          <h2 className="font-headline text-4xl sm:text-5xl lg:text-6xl font-black leading-tight uppercase mb-4">
+            Hiring The Right Talent Made Simple
           </h2>
 
+          <div className="w-full h-px bg-foreground mb-4" />
+
+          {/* Drop-cap body */}
+          <p className="drop-cap font-body text-base leading-relaxed mb-4">
+            Build the decentralized future: find your dream role and kickstart your
+            crypto career. From DeFi protocols to NFT platforms, the next generation
+            of the internet is hiring today.
+          </p>
+
+          <p className="font-body text-base leading-relaxed mb-8 text-muted-foreground">
+            Whether you are an engineer building the infrastructure of tomorrow,
+            a designer shaping on-chain experiences, or a marketer rallying
+            communities — Web3 employers are looking for talent like yours.
+          </p>
+
+          {/* CTA buttons */}
           <nav
-            className="mt-10 flex flex-col gap-6 sm:flex-row sm:justify-center max-w-md mx-auto"
             aria-label="Primary calls to action"
+            className="flex flex-wrap gap-0 border border-foreground w-fit"
           >
-            <Button
-              asChild
-              className="px-10 py-4 bg-primary text-white transition-all duration-300 ease-in-out hover:violet-600 hover:shadow-lg hover:shadow-purple-400/50 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 active:scale-95 dark:bg-purple-600 dark:hover:bg-purple-400"
+            <Link
+              href="/post-job"
+              className="px-6 py-3 font-sans text-sm font-bold uppercase tracking-widest bg-foreground text-background transition-all duration-200 hover:bg-[#CC0000]"
             >
-              <Link href="/post-job" aria-label="Post a job">
-                Post a Job
-              </Link>
-            </Button>
+              Post a Job
+            </Link>
             <SmoothScrollToSection href="#availableJobs">
-              <Button
-                asChild
-                variant="outline"
-                className="px-10 py-4 transition-all duration-300 shadow-lg border hover:shadow-lg hover:shadow-purple-400/50"
+              <Link
+                href="#availableJobs"
+                className="px-6 py-3 font-sans text-sm font-bold uppercase tracking-widest bg-background text-foreground border-l border-foreground transition-all duration-200 hover:bg-foreground hover:text-background"
               >
-                <Link href="#availableJobs" aria-label="Scroll to job listings">
-                  Find Jobs ↓
-                </Link>
-              </Button>
+                Find Jobs ↓
+              </Link>
             </SmoothScrollToSection>
           </nav>
         </div>
-      </HeroBackground>
+
+        {/* Right: logo carousels */}
+        <div className="lg:w-5/12 flex flex-col justify-center overflow-hidden border-t border-foreground lg:border-t-0">
+          <CompanySlider />
+        </div>
+
+      </div>
     </section>
   );
 }

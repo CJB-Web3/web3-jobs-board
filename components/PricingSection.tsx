@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -117,11 +118,12 @@ export default function PricingSection() {
                 </CardContent>
                 <CardFooter>
                   <Button
-                    className={`w-full ${splineSans.className}`}
+                    className={`w-full border-black ${splineSans.className}`}
                     variant="outline"
                     size="lg"
+                    asChild
                   >
-                    Get Started
+                    <Link href="/post-job">Get Started</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -169,8 +171,9 @@ export default function PricingSection() {
                   <Button
                     className={`w-full bg-primary-foreground text-primary hover:bg-primary-foreground/90 ${splineSans.className}`}
                     size="lg"
+                    asChild
                   >
-                    Choose Plan
+                    <Link href="/post-job">Get Started</Link>
                   </Button>
                 </CardFooter>
               </Card>

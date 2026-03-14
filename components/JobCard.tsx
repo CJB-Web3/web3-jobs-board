@@ -1,17 +1,9 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { JobData } from "@/lib/types";
 import { formatDistanceFromNow, formatSalaryCurrency } from "@/lib/utils";
-import { CalendarClock, CircleDollarSign } from "lucide-react";
-import { Spline_Sans } from "next/font/google";
-import { FaCrown, FaMapMarkerAlt, FaWifi } from "react-icons/fa";
+import { CalendarClock, CircleDollarSign, MapPin, Wifi } from "lucide-react";
 import JobModal from "./JobModal";
-
-const spline_sans_reg = Spline_Sans({ subsets: ["latin"], weight: "400" });
-const spline_sans_bold = Spline_Sans({ subsets: ["latin"], weight: "500" });
 
 export default function JobCard({
   job,
@@ -20,22 +12,6 @@ export default function JobCard({
   job: JobData;
   hideFooter?: boolean;
 }) {
-  const getLocationIcon = () => {
-    return job.jobLocation === "onsite" ? (
-      <FaMapMarkerAlt
-        className={`mr-1 ${
-          job.featured ? "text-primary-foreground" : "text-primary"
-        }`}
-      />
-    ) : (
-      <FaWifi
-        className={`mr-1 ${
-          job.featured ? "text-primary-foreground" : "text-purple-500"
-        }`}
-      />
-    );
-  };
-
   const getJobType = () => {
     if (job.fullTime) return "Full-time";
     if (job.partTime) return "Part-time";
@@ -46,155 +22,208 @@ export default function JobCard({
 
   const getSalaryRange = () => {
     if (job.minSalary && job.maxSalary && job.salaryCurrency) {
-      return `${formatSalaryCurrency(
-        Number(job.minSalary),
-        job.salaryCurrency
-      )} 
-         - ${formatSalaryCurrency(Number(job.maxSalary), job.salaryCurrency)}`;
+      return `${formatSalaryCurrency(Number(job.minSalary), job.salaryCurrency)} – ${formatSalaryCurrency(Number(job.maxSalary), job.salaryCurrency)}`;
     }
-    return "Not specified";
+    return null;
   };
-  
-  // Check if job has any salary information
-  const hasSalaryInfo = Boolean(job.minSalary || job.maxSalary);
 
-  return (
-    <Card
-      className={`relative overflow-hidden rounded-lg shadow-lg transition-all duration-300 ${
-        job.featured
-          ? "bg-gradient-to-r from-primary to-primary/60 dark:from-primary/65 dark:to-primary text-primary-foreground"
-          : "bg-card border dark:border-primary"
-      } hover:shadow-2xl dark:shadow-purple-950/20 hover:dark:shadow-purple-950`}
-    >
-      {job.featured && (
-        <div className="absolute flex items-center gap-1 top-5 -right-7 bg-yellow-500 dark:bg-yellow-500 transform rotate-45 shadow-md z-10 text-xs font-semibold px-6 py-1 text-primary">
-          <FaCrown className="animate-pulse" /> Featured
+  const hasSalaryInfo = Boolean(job.minSalary || job.maxSalary);
+  const salaryRange = getSalaryRange();
+  const isRemote = job.jobLocation === "remote";
+
+  if (job.featured) {
+    return (
+      <article className="group relative transition-all duration-200 bg-[#FFFAF9] dark:bg-[#1c0808] border-l-4 border-l-[#CC0000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_0_#CC0000]">
+
+        {/* Red header stripe */}
+        <div className="bg-[#CC0000] px-4 sm:px-6 lg:px-8 py-1.5 flex items-center gap-3">
+          <span className="font-sans text-[9px] font-bold uppercase tracking-[0.35em] text-white">
+            ★ Featured Listing
+          </span>
+          <span className="h-px flex-1 bg-white/25" />
+          <span className="font-sans text-[9px] uppercase tracking-[0.25em] text-white/60">
+            Sponsored
+          </span>
         </div>
-      )}
-      <CardContent className="p-6 relative pb-14 md:pb-6">
-        <div className="flex flex-col md:flex-row md:items-start">
-          <div className="mb-4 md:mb-0">
-            <Avatar className="h-14 w-14 ring-2 ring-primary/10 dark:ring-primary">
-              <AvatarImage src={job.companyLogo} alt={job.companyName} />
-              <AvatarFallback>{job.companyName?.[0]}</AvatarFallback>
+
+        <div className="px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+
+            {/* Logo — larger, always full colour */}
+            <div className="flex-shrink-0">
+              <Avatar className="h-16 w-16">
+                <AvatarImage
+                  src={job.companyLogo || undefined}
+                  alt={job.companyName}
+                />
+                <AvatarFallback className="font-headline font-black text-xl bg-[#CC0000] text-white">
+                  {job.companyName?.[0]}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+
+              {/* Role label — in red */}
+              {job.role && (
+                <p className="font-sans text-[9px] font-bold uppercase tracking-[0.3em] text-[#CC0000] dark:text-[#ff6666] mb-1">
+                  {job.role}
+                </p>
+              )}
+
+              {/* Title */}
+              <h3 className="font-headline text-3xl sm:text-4xl font-black leading-tight uppercase mb-1 text-foreground transition-all duration-200 group-hover:underline decoration-2 underline-offset-2">
+                {job.jobTitle}
+              </h3>
+
+              {/* Company */}
+              <p className="font-sans text-base font-bold mb-3 text-foreground">
+                {job.companyName}
+              </p>
+
+              {/* Metadata */}
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm font-sans text-foreground/75 mb-4">
+                <span className="flex items-center gap-1.5">
+                  {isRemote ? <Wifi className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
+                  {isRemote ? "Remote" : job.locationDetails}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CalendarClock className="w-3.5 h-3.5" />
+                  {getJobType()}
+                </span>
+                {hasSalaryInfo && salaryRange && (
+                  <span className="flex items-center gap-1.5 font-semibold text-foreground">
+                    <CircleDollarSign className="w-3.5 h-3.5" />
+                    {salaryRange}
+                  </span>
+                )}
+                {!hideFooter && (
+                  <span className="text-foreground/40">
+                    {formatDistanceFromNow(job.created_at)}
+                  </span>
+                )}
+              </div>
+
+              {/* Keywords */}
+              {job.keywords && (
+                <div className="flex flex-wrap gap-1.5">
+                  {job.keywords.split(",").map((kw, i) => (
+                    <span
+                      key={i}
+                      className="font-sans text-[9px] uppercase tracking-widest px-2 py-0.5 bg-[#CC0000]/10 dark:bg-[#CC0000]/30 border border-[#CC0000]/40 dark:border-[#CC0000]/70 text-[#CC0000] dark:text-[#ff6666]"
+                    >
+                      {kw.trim()}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* CTA */}
+            <div className="flex-shrink-0 self-start sm:self-center">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button className="font-sans text-[10px] font-bold uppercase tracking-widest px-5 py-3 bg-[#CC0000] text-white border border-[#CC0000] transition-all duration-200 hover:bg-transparent hover:text-[#CC0000] dark:hover:bg-[#CC0000]/20 dark:hover:text-[#ff6666] dark:hover:border-[#ff6666]">
+                    Preview
+                  </button>
+                </DialogTrigger>
+                <JobModal job={job} hideFooter={hideFooter} />
+              </Dialog>
+            </div>
+
+          </div>
+        </div>
+      </article>
+    );
+  }
+
+  // ── Regular card ─────────────────────────────────────
+  return (
+    <article className="group relative transition-all duration-200 bg-background hover:bg-secondary/50 hover:shadow-[inset_4px_0_0_0_hsl(var(--foreground))]">
+      <div className="px-4 sm:px-6 lg:px-8 py-5">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+
+          {/* Logo */}
+          <div className="flex-shrink-0">
+              <Avatar className="h-12 w-12">
+                <AvatarImage
+                  src={job.companyLogo || undefined}
+                  alt={job.companyName}
+                  className="grayscale group-hover:grayscale-0 transition-all duration-300"
+                />
+              <AvatarFallback className="font-headline font-black text-lg bg-secondary text-foreground">
+                {job.companyName?.[0]}
+              </AvatarFallback>
             </Avatar>
           </div>
-          <div className="md:ml-6 flex-1">
-            <h2 className={`text-2xl ${spline_sans_bold.className}`}>
-              {job.jobTitle}
-            </h2>
-            <p className={`text-lg tracking-wide ${spline_sans_reg.className}`}>
-              {job.companyName}
-            </p>
 
-            {!hideFooter && (
-              <p
-                className={`text-sm md:hidden ${
-                  job.featured
-                    ? "text-primary-foreground"
-                    : "text-muted-foreground"
-                } capitalize mt-1`}
-              >
-                {formatDistanceFromNow(job.created_at)}
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            {job.role && (
+              <p className="font-sans text-[9px] uppercase tracking-[0.25em] text-muted-foreground mb-1">
+                {job.role}
               </p>
             )}
 
-            <div className="mt-3 flex flex-wrap items-center text-sm gap-4">
-              <span className="flex items-center">
-                {getLocationIcon()}
-                <span
-                  className={`${
-                    job.featured ? "text-primary-foreground" : "text-foreground"
-                  } capitalize`}
-                >
-                  {job.jobLocation === "remote"
-                    ? job.jobLocation
-                    : job.locationDetails}
-                </span>
+            <h3 className="font-headline text-2xl sm:text-3xl font-black leading-tight uppercase mb-1 text-foreground transition-all duration-200 group-hover:underline decoration-2 underline-offset-2">
+              {job.jobTitle}
+            </h3>
+
+            <p className="font-sans text-base font-semibold mb-3 text-foreground/80">
+              {job.companyName}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm font-sans text-foreground/70 mb-3">
+              <span className="flex items-center gap-1.5">
+                {isRemote ? <Wifi className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
+                {isRemote ? "Remote" : job.locationDetails}
               </span>
-              <span className="flex items-center">
-                <CalendarClock
-                  className={`mr-1 w-4 h-4 ${
-                    job.featured ? "text-primary-foreground" : "text-primary"
-                  }`}
-                />
-                <span
-                  className={
-                    job.featured
-                      ? "text-primary-foreground/90"
-                      : "text-foreground"
-                  }
-                >
-                  {getJobType()}
-                </span>
+              <span className="flex items-center gap-1.5">
+                <CalendarClock className="w-3.5 h-3.5" />
+                {getJobType()}
               </span>
-              {/* Only display salary info if it exists */}
-              {hasSalaryInfo && (
-                <span className="flex items-center">
-                  <CircleDollarSign
-                    className={`mr-1 w-4 h-4 ${
-                      job.featured ? "text-primary-foreground" : "text-primary"
-                    }`}
-                  />
-                  <span
-                    className={
-                      job.featured
-                        ? "text-primary-foreground"
-                        : "text-foreground"
-                    }
-                  >
-                    {getSalaryRange()}
-                  </span>
+              {hasSalaryInfo && salaryRange && (
+                <span className="flex items-center gap-1.5">
+                  <CircleDollarSign className="w-3.5 h-3.5" />
+                  {salaryRange}
+                </span>
+              )}
+              {!hideFooter && (
+                <span className="text-foreground/45">
+                  {formatDistanceFromNow(job.created_at)}
                 </span>
               )}
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {job.keywords?.split(",").map((keyword, index) => (
-                <Badge
-                  key={index}
-                  variant={job.featured ? "outline" : "secondary"}
-                  className={`rounded-sm px-3 py-1 text-xs font-medium ${
-                    job.featured
-                      ? "border-primary-foreground/30 text-primary-foreground"
-                      : "bg-primary/10 text-primary dark:bg-primary/30 dark:text-primary-foreground"
-                  }`}
-                >
-                  {keyword.trim()}
-                </Badge>
-              ))}
-            </div>
+
+            {job.keywords && (
+              <div className="flex flex-wrap gap-1.5">
+                {job.keywords.split(",").map((kw, i) => (
+                  <span
+                    key={i}
+                    className="font-sans text-[9px] uppercase tracking-widest px-2 py-0.5 border border-foreground/30 text-foreground/55 transition-colors duration-200 group-hover:border-foreground/60 group-hover:text-foreground/75"
+                  >
+                    {kw.trim()}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
-          <div className="md:ml-4 flex items-center justify-end mt-4 md:mt-0 md:self-center">
+
+          {/* CTA */}
+          <div className="flex-shrink-0 self-start sm:self-center">
             <Dialog>
               <DialogTrigger asChild>
-                <Button
-                  variant={job.featured ? "secondary" : "default"}
-                  className={`w-full sm:w-auto ${
-                    job.featured
-                      ? "bg-primary-foreground text-primary hover:bg-primary-foreground/90"
-                      : "bg-primary text-primary-foreground hover:bg-primary/90"
-                  }`}
-                >
+                <button className="font-sans text-[10px] font-bold uppercase tracking-widest px-4 py-2.5 border border-foreground text-foreground transition-all duration-200 hover:bg-foreground hover:text-background">
                   Preview
-                </Button>
+                </button>
               </DialogTrigger>
               <JobModal job={job} hideFooter={hideFooter} />
             </Dialog>
           </div>
-        </div>
 
-        {!hideFooter && (
-          <p
-            className={`${
-              spline_sans_reg.className
-            } hidden md:block absolute bottom-6 right-6 text-sm ${
-              job.featured ? "text-primary-foreground" : "text-muted-foreground"
-            } capitalize`}
-          >
-            {formatDistanceFromNow(job.created_at)}
-          </p>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      </div>
+    </article>
   );
 }

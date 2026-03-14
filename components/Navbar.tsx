@@ -1,47 +1,29 @@
 "use client";
 
 import { ModeToggle } from "@/components/ui/mode-toggle";
-import { motion } from "framer-motion";
-import { Menu } from "lucide-react";
-import { Audiowide, Spline_Sans } from "next/font/google";
+import { Menu, X } from "lucide-react";
+import { Audiowide } from "next/font/google";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Button } from "./ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "./ui/sheet";
 
-const splineSans = Spline_Sans({ subsets: ["latin"], weight: "500" });
-const audiowide_font = Audiowide({ subsets: ["latin"], weight: "400" });
+const audiowide = Audiowide({ subsets: ["latin"], weight: "400" });
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const menuItems = ["Companies", "Pricing"];
+    if (isOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => { document.body.style.overflow = ""; };
+  }, [isOpen]);
 
   const handleJobsClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (pathname === "/") {
       e.preventDefault();
-      const jobsSection = document.getElementById("availableJobs");
-      if (jobsSection) {
-        jobsSection.scrollIntoView({ behavior: "smooth" });
-      }
+      document.getElementById("availableJobs")?.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -50,171 +32,105 @@ export default function Navbar() {
     router.push(link);
   }
 
-  const handleIsOpen = () => {
-    setIsOpen((prev) => !prev);
-  };
-
   return (
-    <header
-      className={`fixed top-0 z-50 w-full transition-all duration-300 ease-in-out ${
-        scrolled
-          ? "bg-background/80 backdrop-blur-md shadow-md"
-          : "bg-transparent"
-      }`}
-    >
-      <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            // className="flex-shrink-0"
-          >
-            <Link href="/" className="flex gap-4 items-center">
-              <p
-                className={`${audiowide_font.className} font-extrabold tracking-wider text-3xl`}
-              >
-                WJB
-              </p>
+    <header className="fixed top-0 z-50 w-full bg-background border-b-4 border-foreground">
+      {/* Edition bar */}
+      <div className="border-b border-foreground/20 px-4 sm:px-6 lg:px-8 hidden md:flex justify-between items-center h-7">
+        <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          Est. 2024 · The Web3 Employment Record
+        </p>
+        <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+        </p>
+      </div>
+
+      {/* Main nav row */}
+      <nav className="px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-14">
+          {/* Logo */}
+          <Link href="/" className="flex items-baseline gap-2 group">
+            <span className={`${audiowide.className} font-extrabold tracking-wider text-3xl`}>
+              WJB
+            </span>
+          </Link>
+
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-0 divide-x divide-foreground border-l border-foreground">
+            <Link
+              href="/#availableJobs"
+              onClick={handleJobsClick}
+              className="px-5 py-2 font-sans text-xs font-semibold uppercase tracking-widest transition-all duration-200 hover:bg-foreground hover:text-background"
+            >
+              Jobs
             </Link>
-          </motion.div>
-          <div className="hidden md:flex items-center space-x-8">
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0 * 0.1 }}
+            <Link
+              href="/companies"
+              className="px-5 py-2 font-sans text-xs font-semibold uppercase tracking-widest transition-all duration-200 hover:bg-foreground hover:text-background"
             >
-              <Link
-                href={`/#availableJobs`}
-                className="py-2 rounded-md text-base font-medium text-foreground hover:text-primary transition duration-300 ease-in-out relative group"
-                onClick={handleJobsClick}
-              >
-                Jobs
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition duration-300 ease-in-out transform origin-left"></span>
-              </Link>
-            </motion.div>
-
-            {menuItems.map((item, index) => (
-              <motion.div
-                key={item}
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: (index + 1) * 0.1 }}
-              >
-                <Link
-                  href={`/${item.toLowerCase()}`}
-                  className={`${splineSans.className} py-2 rounded-md text-base font-medium text-foreground hover:text-primary transition duration-300 ease-in-out relative group`}
-                >
-                  {item}
-                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition duration-300 ease-in-out transform origin-left"></span>
-                </Link>
-              </motion.div>
-            ))}
-
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: menuItems.length * 0.1 }}
+              Companies
+            </Link>
+            <Link
+              href="/pricing"
+              className="px-5 py-2 font-sans text-xs font-semibold uppercase tracking-widest transition-all duration-200 hover:bg-foreground hover:text-background"
             >
-              <Button asChild>
-                <Link href="/post-job">Post a Job</Link>
-              </Button>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: menuItems.length * 0.1 }}
+              Pricing
+            </Link>
+            <Link
+              href="/post-job"
+              className="px-5 py-2 font-sans text-xs font-semibold uppercase tracking-widest bg-foreground text-background transition-all duration-200 hover:bg-[#CC0000] hover:text-white"
             >
+              Post a Job
+            </Link>
+            <div className="px-3 py-2 border-l border-foreground">
               <ModeToggle />
-            </motion.div>
+            </div>
           </div>
 
-          {/* Mobile Menu */}
-          <div className="md:hidden">
-            <Sheet open={isOpen} onOpenChange={handleIsOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  // className="hover:bg-orange-200"
-                >
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle className="hidden">Menu</SheetTitle>
-                  <ModeToggle />
-                </SheetHeader>
-                <div className="flex flex-col space-y-3 mt-6">
-                  <Button
-                    variant={"ghost"}
-                    onClick={() => handleRedirect("/#availableJobs")}
-                  >
-                    Find Jobs
-                  </Button>
-
-                  <Button
-                    variant={"ghost"}
-                    onClick={() => handleRedirect("/companies")}
-                  >
-                    Companies
-                  </Button>
-
-                  <Button
-                    variant={"ghost"}
-                    onClick={() => handleRedirect("/pricing")}
-                  >
-                    Pricing
-                  </Button>
-
-                  <Button onClick={() => handleRedirect("/post-job")}>
-                    Post a Job
-                  </Button>
-                </div>
-              </SheetContent>
-            </Sheet>
+          {/* Mobile controls */}
+          <div className="md:hidden flex items-center gap-3">
+            <ModeToggle />
+            <button
+              onClick={() => setIsOpen((v) => !v)}
+              className="p-2 border border-foreground transition-all duration-200 hover:bg-foreground hover:text-background"
+              aria-label="Toggle menu"
+            >
+              {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
       </nav>
-      {/* <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            // className="md:hidden bg-background border-t border-border"
-          >
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              <Link
-                href={`/#availableJobs`}
-                className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:text-purple-400 hover:bg-muted transition duration-300 ease-in-out"
-                onClick={handleJobsClick}
-              >
-                Jobs
-              </Link>
 
-              {menuItems.map((item) => (
-                <Link
-                  key={item}
-                  href={`/${item.toLowerCase()}`}
-                  className={`${splineSans.className} block px-3 py-2 rounded-md text-base font-medium text-foreground hover:text-purple-400 hover:bg-muted transition duration-300 ease-in-out`}
-                >
-                  {item}
-                </Link>
-              ))}
-              <Link
-                href="/post-job"
-                className={`${splineSans.className} block px-3 py-2 rounded-md text-base font-medium text-purple-500 hover:text-purple-400 hover:bg-muted transition duration-300 ease-in-out`}
-              >
-                Post a Job
-              </Link>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence> */}
+      {/* Mobile menu */}
+      {isOpen && (
+        <div className="md:hidden border-t-2 border-foreground bg-background animate-fade-in-down">
+          <div className="divide-y divide-foreground/20">
+            <button
+              onClick={() => handleRedirect("/#availableJobs")}
+              className="w-full text-left px-6 py-4 font-sans text-sm font-semibold uppercase tracking-widest hover:bg-foreground hover:text-background transition-all duration-200"
+            >
+              Find Jobs
+            </button>
+            <button
+              onClick={() => handleRedirect("/companies")}
+              className="w-full text-left px-6 py-4 font-sans text-sm font-semibold uppercase tracking-widest hover:bg-foreground hover:text-background transition-all duration-200"
+            >
+              Companies
+            </button>
+            <button
+              onClick={() => handleRedirect("/pricing")}
+              className="w-full text-left px-6 py-4 font-sans text-sm font-semibold uppercase tracking-widest hover:bg-foreground hover:text-background transition-all duration-200"
+            >
+              Pricing
+            </button>
+            <button
+              onClick={() => handleRedirect("/post-job")}
+              className="w-full text-left px-6 py-4 font-sans text-sm font-semibold uppercase tracking-widest bg-foreground text-background"
+            >
+              Post a Job →
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

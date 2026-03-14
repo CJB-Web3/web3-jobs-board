@@ -1,68 +1,65 @@
-// JobListingForm.tsx (Parent Component)
-// Replace the entire file with this complete code.
-
 "use client";
-import { createJobPosting } from "@/lib/actions";
+import { createJobPosting } from "@/lib/post-job-actions";
 import { defaultCompanyValues, defaultJobValues } from "@/lib/defaultValues";
-import { CompanyForm, JobData, JobForm, PaymentForm } from "@/lib/types";
+import {
+  CompanyForm,
+  JobData,
+  JobForm,
+  PaymentForm,
+  ReusableCompany,
+} from "@/lib/types";
 import { useEffect, useState } from "react";
 import { HiCheck } from "react-icons/hi2";
 import dynamic from "next/dynamic";
 
 const CompanyFormSkeleton = () => (
-  <div className="border rounded-lg p-6 shadow-sm min-h-[500px] w-full">
-    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
+  <div className="border border-foreground p-6 min-h-[500px] w-full animate-pulse">
+    <div className="h-6 bg-muted w-1/3 mb-6"></div>
     <div className="space-y-4">
       {[1, 2, 3, 4].map((i) => (
         <div key={i} className="space-y-2">
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+          <div className="h-3 bg-muted w-1/4"></div>
+          <div className="h-10 bg-muted w-full"></div>
         </div>
       ))}
-      <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mt-6"></div>
+      <div className="h-10 bg-muted w-1/3 mt-6"></div>
     </div>
   </div>
 );
 
 const JobFormSkeleton = CompanyFormSkeleton;
 const PreviewSkeleton = () => (
-  <div className="border rounded-lg p-6 shadow-sm min-h-[600px] w-full">
-    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
+  <div className="border border-foreground p-6 min-h-[600px] w-full animate-pulse">
+    <div className="h-6 bg-muted w-1/3 mb-6"></div>
     <div className="space-y-4">
       {[1, 2, 3, 4, 5, 6].map((i) => (
-        <div
-          key={i}
-          className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"
-        ></div>
+        <div key={i} className="h-4 bg-muted w-full"></div>
       ))}
     </div>
   </div>
 );
 
 const PaymentInfoSkeleton = () => (
-  <div className="border rounded-lg p-6 shadow-sm min-h-[400px] w-full">
-    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
+  <div className="border border-foreground p-6 min-h-[400px] w-full animate-pulse">
+    <div className="h-6 bg-muted w-1/3 mb-6"></div>
     <div className="space-y-4">
       {[1, 2, 3].map((i) => (
         <div key={i} className="space-y-2">
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+          <div className="h-3 bg-muted w-1/4"></div>
+          <div className="h-10 bg-muted w-full"></div>
         </div>
       ))}
-      <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mt-6"></div>
+      <div className="h-10 bg-muted w-1/3 mt-6"></div>
     </div>
   </div>
 );
 
 const PaymentCheckoutSkeleton = () => (
-  <div className="border rounded-lg p-6 shadow-sm min-h-[450px] w-full">
-    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
+  <div className="border border-foreground p-6 min-h-[450px] w-full animate-pulse">
+    <div className="h-6 bg-muted w-1/3 mb-6"></div>
     <div className="space-y-6">
       {[1, 2, 3, 4].map((i) => (
-        <div
-          key={i}
-          className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-full"
-        ></div>
+        <div key={i} className="h-10 bg-muted w-full"></div>
       ))}
     </div>
   </div>
@@ -94,7 +91,11 @@ const PaymentCheckoutForm = dynamic(() => import("./PaymentCheckoutForm"), {
   ssr: false,
 });
 
-function JobListingForm() {
+function JobListingForm({
+  reusableCompanies,
+}: {
+  reusableCompanies: ReusableCompany[];
+}) {
   const [currentStep, setCurrentStep] = useState(0);
   const [jobFormData, setJobFormData] = useState<JobForm>(defaultJobValues);
   const [companyFormData, setCompanyFormData] =
@@ -175,25 +176,21 @@ function JobListingForm() {
           base64: companyLogoBase64,
         },
         paymentCurrency: values.paymentCurrency,
-        featured: values.jobPkg === "pkg-2" ? true : false,
-        paymentStatus: "unpaid" as const,
+        featured: values.jobPkg === "pkg-2",
       };
 
       setContentHeight(
         document.getElementById("form-content")?.offsetHeight + "px" || "auto"
       );
-      const result = await createJobPosting(newJob);
-      setJob(result.job);
+      const createdJob = await createJobPosting(newJob);
+      setJob(createdJob);
 
       setTimeout(() => {
         setCurrentStep(4);
         scrollToTop();
         setTimeout(() => setContentHeight("auto"), 100);
       }, 50);
-    } catch (error) {
-      // 🔧 THIS IS THE FIX 🔧
-      // We removed `console.error` to prevent the Next.js error overlay.
-      // The error message will be shown in our Alert component instead.
+    } catch {
       setSubmissionError("An unexpected error occurred while creating the job posting. Please try again.");
     }
   }
@@ -202,7 +199,7 @@ function JobListingForm() {
     if (currentStep > 0) {
       scrollToTop();
     }
-  }, []);
+  }, [currentStep]);
 
   const handleBack = () => {
     if (currentStep > 0) {
@@ -229,41 +226,42 @@ function JobListingForm() {
 
   return (
     <div className="min-h-screen z-10 space-y-8">
-      <div className="h-20 hidden md:block">
-        <div className="flex justify-between items-center mb-8">
+      {/* Newspaper-style step progress bar */}
+      <div className="hidden md:block border-b border-foreground pb-4">
+        <div className="flex justify-between items-start">
           {steps.map((step, index) => (
-            <div key={step} className="flex flex-col items-center w-1/5">
+            <div key={step} className="flex flex-col items-center w-1/5 relative">
+              {/* Connecting rule line */}
+              {index < steps.length - 1 && (
+                <div
+                  className={`absolute top-3 left-1/2 w-full h-px transition-colors duration-200 ${
+                    index < currentStep ? "bg-foreground" : "bg-muted"
+                  }`}
+                />
+              )}
+              {/* Step marker */}
               <div
-                className={`w-full h-1 ${
-                  index <= currentStep
-                    ? "bg-purple-600"
-                    : "bg-gray-300 dark:bg-gray-700"
-                } transition-colors duration-300 ease-in-out ${
-                  index === 0
-                    ? "rounded-l-full"
-                    : index === steps.length - 1
-                    ? "rounded-r-full"
-                    : ""
-                }`}
-              ></div>
-              <div
-                className={`mt-3 w-8 h-8 flex border items-center text-xs font-semibold justify-center rounded-full transition-all duration-300 ease-in-out ${
-                  index <= currentStep
-                    ? "bg-purple-600 text-white border-transparent"
-                    : "bg-transparent border-purple-500 text-purple-500"
+                className={`relative z-10 w-6 h-6 flex items-center text-[10px] font-sans font-bold justify-center border transition-all duration-200 ${
+                  index < currentStep
+                    ? "bg-foreground text-background border-foreground"
+                    : index === currentStep
+                    ? "bg-[#CC0000] text-background border-[#CC0000]"
+                    : "bg-background text-muted-foreground border-muted-foreground"
                 }`}
               >
                 {index < currentStep ? (
-                  <HiCheck className="w-4 h-4" />
+                  <HiCheck className="w-3 h-3" />
                 ) : (
                   index + 1
                 )}
               </div>
               <span
-                className={`mt-2 text-sm font-medium text-center ${
+                className={`mt-2 font-sans text-[9px] uppercase tracking-widest text-center ${
                   index === currentStep
-                    ? "text-purple-600 dark:text-purple-400"
-                    : "text-gray-500 dark:text-gray-400"
+                    ? "text-[#CC0000]"
+                    : index < currentStep
+                    ? "text-foreground"
+                    : "text-muted-foreground"
                 }`}
               >
                 {step}
@@ -280,6 +278,7 @@ function JobListingForm() {
       >
         {currentStep === 0 && (
           <CompanyInfoForm
+            companies={reusableCompanies}
             defaultValues={companyFormData}
             handleStep0={handleStep0}
           />

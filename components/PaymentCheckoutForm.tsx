@@ -1,312 +1,487 @@
 "use client";
+
+import { applyJobCouponCode, finalizeJobPayment } from "@/lib/post-job-actions";
+import {
+  PAYMENT_RECIPIENT,
+  SUPPORTED_PAYMENT_TOKENS,
+  SupportedPaymentToken,
+  getChainPaymentConfig,
+  getJobPostingPrice,
+  getPaymentTokenConfig,
+  getPaymentVerificationMessage,
+  isSupportedPaymentChainId,
+} from "@/lib/payment-config";
 import { JobData } from "@/lib/types";
-import { formatCurrency } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import JobCard from "./JobCard";
 import { Button } from "./ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "./ui/card";
+import { Input } from "./ui/input";
 import { Separator } from "./ui/separator";
-import { Loader2, Check, X, Wallet, ExternalLink, AlertCircle, Mail, Home, Eye, ArrowRight } from "lucide-react";
-import { useAppKit, useAppKitAccount, useAppKitNetwork } from '@reown/appkit/react';
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { parseUnits } from 'viem';
-import { updateJobPaymentStatus } from "@/lib/actions";
+import {
+  Loader2,
+  Check,
+  X,
+  Wallet,
+  ExternalLink,
+  AlertCircle,
+  Mail,
+  Home,
+  ArrowRight,
+  ShieldCheck,
+  TicketPercent,
+} from "lucide-react";
+import { useAppKit, useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
+import { useSignMessage, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { parseUnits } from "viem";
 import { useRouter } from "next/navigation";
-import { mainnet, polygon, bsc, base } from '@reown/appkit/networks';
 import { Badge } from "./ui/badge";
 import Image from "next/image";
-import { Spline_Sans } from "next/font/google"; // Import Spline_Sans
 
-// Initialize Spline Sans font
-const spline_sans = Spline_Sans({ subsets: ["latin"], weight: "500" });
-const spline_sans_reg = Spline_Sans({ subsets: ["latin"], weight: "400" });
-
-// ERC20 ABI for transfer function
 const ERC20_ABI = [
   {
-    name: 'transfer',
-    type: 'function',
+    name: "transfer",
+    type: "function",
     inputs: [
-      { name: 'to', type: 'address' },
-      { name: 'amount', type: 'uint256' }
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" },
     ],
-    outputs: [{ type: 'bool' }]
+    outputs: [{ type: "bool" }],
   },
-  {
-    name: 'decimals',
-    type: 'function',
-    inputs: [],
-    outputs: [{ type: 'uint8' }]
-  },
-  {
-    name: 'symbol',
-    type: 'function',
-    inputs: [],
-    outputs: [{ type: 'string' }]
-  }
 ] as const;
+
+const TOKEN_LOGOS: Record<SupportedPaymentToken, string> = {
+  USDC: "/tokens/usdc-logo.png",
+  USDT: "/tokens/usdt-logo.png",
+  DAI: "/tokens/dai-logo.png",
+};
 
 type Props = {
   job: JobData;
 };
 
-const PAYMENT_RECIPIENT = "0x14fBE93b2E284bd255001390B6D40AE43dda1952";
+type PaymentStep =
+  | "connect"
+  | "select"
+  | "processing"
+  | "signing"
+  | "verifying"
+  | "success"
+  | "error";
 
-const SUPPORTED_TOKENS = ['USDC', 'USDT', 'DAI'] as const;
-type SupportedToken = typeof SUPPORTED_TOKENS[number];
-
-const TOKEN_LOGOS: Record<SupportedToken, string> = {
-  USDC: "/tokens/usdc-logo.png",
-  USDT: "/tokens/usdt-logo.png",
-  DAI: "/tokens/dai-logo.png"
+type SubmittedPayment = {
+  chainId: number;
+  txHash: `0x${string}`;
 };
 
-// Mainnet token addresses
-const TOKEN_ADDRESSES = {
-  // Ethereum Mainnet
-  [mainnet.id]: {
-    usdc: { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', decimals: 6 },
-    usdt: { address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', decimals: 6 },
-    dai: { address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', decimals: 18 }
-  },
-  // Polygon Mainnet
-  [polygon.id]: {
-    usdc: { address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', decimals: 6 },
-    usdt: { address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', decimals: 6 },
-    dai: { address: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063', decimals: 18 }
-  },
-  // BNB Smart Chain
-  [bsc.id]: {
-    usdc: { address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', decimals: 18 },
-    usdt: { address: '0x55d398326f99059fF775485246999027B3197955', decimals: 18 },
-    dai: { address: '0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3', decimals: 18 }
-  },
-  // Base Mainnet
-  [base.id]: {
-    usdc: { address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6 },
-    usdt: { address: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2', decimals: 18 },
-    dai: { address: '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb', decimals: 18 }
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) {
+    return error.message;
   }
-};
+
+  return "Something went wrong";
+}
+
+function getTransactionErrorMessage(error: unknown) {
+  const message = getErrorMessage(error).toLowerCase();
+
+  if (message.includes("user denied") || message.includes("rejected")) {
+    return "Transaction was cancelled";
+  }
+
+  if (message.includes("insufficient")) {
+    return "Insufficient wallet balance for the selected payment";
+  }
+
+  return "Transaction failed";
+}
+
+function getVerificationErrorMessage(error: unknown) {
+  const message = getErrorMessage(error);
+  const normalizedMessage = message.toLowerCase();
+
+  if (normalizedMessage.includes("rejected")) {
+    return "Payment was sent, but verification was cancelled. Retry verification to publish your listing.";
+  }
+
+  if (
+    normalizedMessage.includes("not confirmed") ||
+    normalizedMessage.includes("not contain")
+  ) {
+    return "We could not verify the payment yet. If the transfer has already been mined, retry verification in a moment.";
+  }
+
+  return message;
+}
 
 export default function PaymentCheckoutForm({ job }: Props) {
   const { open } = useAppKit();
   const { address, isConnected } = useAppKitAccount();
   const { chainId } = useAppKitNetwork();
   const router = useRouter();
+  const normalizedChainId =
+    typeof chainId === "string" ? Number(chainId) : chainId;
 
-  const [selectedToken, setSelectedToken] = useState<SupportedToken>('USDC');
-  const [paymentStep, setPaymentStep] = useState<'connect' | 'select' | 'pay' | 'processing' | 'success' | 'error'>('connect');
-  const [error, setError] = useState<string>('');
-  const [txHash, setTxHash] = useState<string>('');
+  const [selectedToken, setSelectedToken] = useState<SupportedPaymentToken>("USDC");
+  const [paymentStep, setPaymentStep] = useState<PaymentStep>("connect");
+  const [error, setError] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [couponFeedback, setCouponFeedback] = useState("");
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [submittedPayment, setSubmittedPayment] = useState<SubmittedPayment | null>(
+    null
+  );
+  const [checkoutJob, setCheckoutJob] = useState(job);
   const [finalJobData, setFinalJobData] = useState<JobData | null>(null);
 
-  const { data: hash, writeContractAsync, isPending: isWriting, reset: resetWrite } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess, error: confirmError } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const verificationAttemptRef = useRef<string | null>(null);
 
-  // Get token contract address for current chain
-  const getTokenAddress = () => {
-    if (!chainId || !TOKEN_ADDRESSES[chainId as keyof typeof TOKEN_ADDRESSES]) return null;
-    const tokenKey = selectedToken.toLowerCase() as 'usdc' | 'usdt' | 'dai';
-    return TOKEN_ADDRESSES[chainId as keyof typeof TOKEN_ADDRESSES][tokenKey]?.address;
-  };
+  const { writeContractAsync, isPending: isWriting, reset: resetWrite } =
+    useWriteContract();
+  const { signMessageAsync, isPending: isSigning } = useSignMessage();
+  const { isLoading: isConfirming, isSuccess: isConfirmed, error: confirmError } =
+    useWaitForTransactionReceipt({
+      hash: submittedPayment?.txHash,
+    });
 
-  const getTokenDecimals = () => {
-    if (!chainId || !TOKEN_ADDRESSES[chainId as keyof typeof TOKEN_ADDRESSES]) return 6;
-    const tokenKey = selectedToken.toLowerCase() as 'usdc' | 'usdt' | 'dai';
-    return TOKEN_ADDRESSES[chainId as keyof typeof TOKEN_ADDRESSES][tokenKey]?.decimals || 6;
-  };
+  const chainPaymentConfig = useMemo(
+    () => (normalizedChainId ? getChainPaymentConfig(normalizedChainId) : null),
+    [normalizedChainId]
+  );
 
-  // Get payment amount based on package
-  const getPaymentAmount = () => {
-      return job.featured ? 150 : 80;
-  };
+  const selectedTokenConfig = useMemo(
+    () =>
+      normalizedChainId
+        ? getPaymentTokenConfig(normalizedChainId, selectedToken)
+        : null,
+    [normalizedChainId, selectedToken]
+  );
+
+  const activeExplorerUrl = useMemo(() => {
+    const explorerChainId = submittedPayment?.chainId ?? normalizedChainId;
+    if (!explorerChainId) {
+      return "";
+    }
+
+    return getChainPaymentConfig(explorerChainId)?.explorerUrl ?? "";
+  }, [normalizedChainId, submittedPayment]);
 
   useEffect(() => {
-    if (isConnected && paymentStep === 'connect') {
-      setPaymentStep('select');
-    }
-  }, [isConnected, paymentStep]);
+    setCheckoutJob(job);
+  }, [job]);
+
+  const baseAmount = useMemo(
+    () => getJobPostingPrice(Boolean(checkoutJob.featured)),
+    [checkoutJob.featured]
+  );
+  const paymentAmount = checkoutJob.payableAmount;
+  const couponApplied = paymentAmount < baseAmount;
+  const discountAmount = Math.max(baseAmount - paymentAmount, 0);
+  const canRetryVerification = Boolean(submittedPayment?.txHash);
+  const transactionHash = submittedPayment?.txHash ?? finalJobData?.transactionHash ?? "";
+  const canEditCoupon =
+    !submittedPayment &&
+    paymentStep !== "processing" &&
+    paymentStep !== "signing" &&
+    paymentStep !== "verifying" &&
+    paymentStep !== "success";
 
   useEffect(() => {
-    if (isSuccess && hash) {
-      setTxHash(hash);
-      handlePaymentSuccess(hash);
+    if (isConnected && paymentStep === "connect") {
+      setPaymentStep("select");
     }
-  }, [isSuccess, hash]);
 
-  // Handle confirmation errors
+    if (!isConnected && !submittedPayment && paymentStep !== "success") {
+      setPaymentStep("connect");
+    }
+  }, [isConnected, paymentStep, submittedPayment]);
+
   useEffect(() => {
-    if (confirmError) {
-      setError('Transaction failed during confirmation');
-      setPaymentStep('error');
+    if (!confirmError || paymentStep === "success") {
+      return;
     }
-  }, [confirmError]);
 
-  const handlePaymentSuccess = async (transactionHash: string) => {
-    setPaymentStep('success');
+    setError(
+      "We could not confirm the transaction yet. If the payment was already sent, retry verification below."
+    );
+    setPaymentStep("error");
+  }, [confirmError, paymentStep]);
 
-    try {
-      // Update job status in database
-      const updatedJob = await updateJobPaymentStatus(job.id, transactionHash);
-      setFinalJobData(updatedJob || job);
-    } catch (err) {
-      // Still show success since payment went through
-      setFinalJobData(job);
+  const verifyConfirmedPayment = useCallback(
+    async (payment: SubmittedPayment) => {
+      if (!address) {
+        setError("Reconnect the wallet that sent the payment to finish verification.");
+        setPaymentStep("error");
+        return;
+      }
+
+      try {
+        setError("");
+        setPaymentStep("signing");
+
+        const signature = await signMessageAsync({
+          message: getPaymentVerificationMessage({
+            jobId: job.id,
+            chainId: payment.chainId,
+            txHash: payment.txHash,
+          }),
+        });
+
+        setPaymentStep("verifying");
+
+        const updatedJob = await finalizeJobPayment({
+          jobId: job.id,
+          chainId: payment.chainId,
+          txHash: payment.txHash,
+          signer: address,
+          signature,
+        });
+
+        setFinalJobData(updatedJob);
+        setPaymentStep("success");
+      } catch (verificationError) {
+        setError(getVerificationErrorMessage(verificationError));
+        setPaymentStep("error");
+      }
+    },
+    [address, job.id, signMessageAsync]
+  );
+
+  useEffect(() => {
+    if (!isConfirmed || !submittedPayment) {
+      return;
     }
-  };
+
+    if (verificationAttemptRef.current === submittedPayment.txHash) {
+      return;
+    }
+
+    verificationAttemptRef.current = submittedPayment.txHash;
+    void verifyConfirmedPayment(submittedPayment);
+  }, [isConfirmed, submittedPayment, verifyConfirmedPayment]);
 
   const handlePayment = async () => {
-    if (!chainId || !address) {
-      setError('Please connect your wallet');
+    if (!normalizedChainId || !address) {
+      setError("Please connect your wallet");
       return;
     }
 
-    const tokenAddress = getTokenAddress();
-    if (!tokenAddress) {
-      setError('Token not supported on this network');
+    if (!isSupportedPaymentChainId(normalizedChainId) || !chainPaymentConfig) {
+      setError("Please switch to a supported network");
       return;
     }
 
-    const decimals = getTokenDecimals();
-    const amount = parseUnits(getPaymentAmount().toString(), decimals);
+    if (!selectedTokenConfig) {
+      setError("Token not supported on this network");
+      return;
+    }
 
     try {
-      setError('');
-      setPaymentStep('processing');
+      setError("");
+      setPaymentStep("processing");
+      verificationAttemptRef.current = null;
 
-      // Use writeContractAsync and properly catch errors
       const txHash = await writeContractAsync({
-        address: tokenAddress as `0x${string}`,
+        address: selectedTokenConfig.address,
         abi: ERC20_ABI,
-        functionName: 'transfer',
-        args: [PAYMENT_RECIPIENT as `0x${string}`, amount],
-      }).catch((err) => {
-        // Handle user rejection
-        if (err.message?.includes('User denied') || err.message?.includes('User rejected') || err.message?.includes('rejected')) {
-          throw new Error('Transaction was cancelled');
-        }
-        // Handle other errors
-        if (err.message?.includes('insufficient funds')) {
-          throw new Error('Insufficient funds in wallet');
-        }
-        throw new Error('Transaction failed');
+        functionName: "transfer",
+        args: [
+          PAYMENT_RECIPIENT as `0x${string}`,
+          parseUnits(String(paymentAmount), selectedTokenConfig.decimals),
+        ],
       });
 
-    } catch (err: any) {
-      setError(err.message || 'Transaction failed');
-      setPaymentStep('error');
+      setSubmittedPayment({
+        chainId: normalizedChainId,
+        txHash,
+      });
+    } catch (paymentError) {
+      setSubmittedPayment(null);
+      setError(getTransactionErrorMessage(paymentError));
+      setPaymentStep("error");
     }
   };
 
-  const getNetworkName = () => {
-    switch (chainId) {
-      case mainnet.id: return 'Ethereum';
-      case polygon.id: return 'Polygon';
-      case bsc.id: return 'BNB Smart Chain';
-      case base.id: return 'Base';
-      default: return 'Unknown Network';
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponFeedback("Enter a coupon code to apply the discount.");
+      return;
+    }
+
+    try {
+      setCouponFeedback("");
+      setIsApplyingCoupon(true);
+
+      const updatedJob = await applyJobCouponCode({
+        jobId: checkoutJob.id,
+        code: couponCode,
+      });
+
+      setCheckoutJob(updatedJob);
+      setCouponFeedback("Coupon applied. Your total has been reduced by 50%.");
+    } catch (couponError) {
+      setCouponFeedback(getErrorMessage(couponError));
+    } finally {
+      setIsApplyingCoupon(false);
     }
   };
 
-  const isCorrectNetwork = () => {
-    if(chainId == mainnet.id || chainId == polygon.id || chainId == bsc.id || chainId == base.id) {
-      return true;
-    } else {
-      return false;
+  const retryVerification = async () => {
+    if (!submittedPayment) {
+      return;
     }
+
+    verificationAttemptRef.current = submittedPayment.txHash;
+    await verifyConfirmedPayment(submittedPayment);
   };
 
-  const getBlockExplorerUrl = () => {
-    switch (chainId) {
-      case mainnet.id: return 'https://etherscan.io';
-      case polygon.id: return 'https://polygonscan.com';
-      case bsc.id: return 'https://bscscan.com';
-      case base.id: return 'https://basescan.org';
-      default: return '';
-    }
+  const resetCheckout = () => {
+    setError("");
+    setSubmittedPayment(null);
+    setPaymentStep(isConnected ? "select" : "connect");
+    verificationAttemptRef.current = null;
+    resetWrite();
   };
+
+  const isCorrectNetwork = Boolean(chainPaymentConfig);
 
   return (
-    <Card className="max-w-2xl mx-auto border dark:border-primary shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-t-lg">
-        <CardTitle className={`text-2xl font-bold flex items-center gap-2 ${spline_sans.className}`}> {/* Applied Spline Sans */}
+    <div className="max-w-2xl mx-auto border border-foreground">
+      <div className="bg-foreground text-background px-6 py-4">
+        <p className="font-sans text-[10px] uppercase tracking-[0.3em] text-background/60 mb-1">
+          ■ Step 5 — Checkout
+        </p>
+        <h2 className="font-headline text-2xl font-black uppercase tracking-tight flex gap-2 items-center">
           <Wallet className="h-6 w-6" />
           Payment Checkout
-        </CardTitle>
-        <CardDescription className="text-purple-100">
+        </h2>
+        <p className="font-sans text-[10px] uppercase tracking-widest text-background/60 mt-1">
           Pay securely with stablecoins on multiple networks
-        </CardDescription>
-      </CardHeader>
+        </p>
+      </div>
 
-      <CardContent className="space-y-6 pt-6">
-        {paymentStep !== 'success' && (
+      <div className="space-y-5 p-6">
+        {paymentStep !== "success" && (
           <>
-            <JobCard job={job} hideFooter={true} />
+            <JobCard job={checkoutJob} hideFooter={true} />
             <Separator />
           </>
         )}
 
-        <div className="space-y-2 bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
-          <h4 className="font-semibold text-sm uppercase tracking-wide text-gray-600 dark:text-gray-400">
+        <div className="border border-foreground p-4">
+          <p className="font-sans text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-3">
             Order Summary
-          </h4>
+          </p>
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-sm">Plan Type</span>
-              <Badge className="rounded-sm" variant={job.featured ? "default" : "outline"}>
-                {job.featured ? "Featured" : "Basic"}
+              <span className="font-body text-sm">Plan Type</span>
+              <Badge
+                className="rounded-none border-foreground"
+                variant={checkoutJob.featured ? "default" : "outline"}
+              >
+                {checkoutJob.featured ? "Featured" : "Basic"}
               </Badge>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm">Duration</span>
-              <span className={`${spline_sans_reg.className}`}>30 days</span>
+              <span className="font-body text-sm">Duration</span>
+              <span className="font-sans text-sm">30 days</span>
             </div>
-            <Separator className="my-2" />
+            <div className="h-px bg-foreground my-2" />
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <TicketPercent className="h-4 w-4 text-foreground" />
+                <span className="font-body text-sm">Coupon Code</span>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Input
+                  value={couponCode}
+                  onChange={(event) => setCouponCode(event.target.value)}
+                  placeholder="Enter coupon code"
+                  disabled={!canEditCoupon || couponApplied || isApplyingCoupon}
+                  className="rounded-none"
+                />
+                <Button
+                  type="button"
+                  onClick={handleApplyCoupon}
+                  disabled={!canEditCoupon || couponApplied || isApplyingCoupon}
+                  variant="outline"
+                  className="sm:w-auto"
+                >
+                  {isApplyingCoupon ? (
+                    <>
+                      Applying
+                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                    </>
+                  ) : couponApplied ? (
+                    "Applied"
+                  ) : (
+                    "Apply"
+                  )}
+                </Button>
+              </div>
+              {couponFeedback && (
+                <p
+                  className={`text-xs ${
+                    couponApplied ? "text-foreground" : "text-[#CC0000]"
+                  }`}
+                >
+                  {couponFeedback}
+                </p>
+              )}
+            </div>
+            <div className="h-px bg-foreground my-2" />
+            {couponApplied && (
+              <>
+                <div className="flex justify-between items-center">
+                  <span className="font-body text-sm">Subtotal</span>
+                  <span className="font-sans text-sm">
+                    {baseAmount} {selectedToken}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-[#CC0000]">
+                  <span className="font-body text-sm">Coupon Discount</span>
+                  <span className="font-sans text-sm">- {discountAmount} {selectedToken}</span>
+                </div>
+                <div className="h-px bg-foreground my-2" />
+              </>
+            )}
             <div className="flex justify-between items-center">
-              <span className="font-medium">Total</span>
-              <span className={`text-xl ${spline_sans_reg.className}`}> 
-                {getPaymentAmount()} {selectedToken}
+              <span className="font-body font-medium">Total</span>
+              <span className="font-headline text-xl font-bold">
+                {paymentAmount} {selectedToken}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Fiat payment message */}
-        {paymentStep !== 'success' && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-600 dark:border-blue-800">
+        {paymentStep !== "success" && (
+          <div className="border border-foreground p-4 bg-muted/20">
             <div className="flex items-start gap-3">
-              <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  For fiat payment options or bulk job listings, please contact us at{' '}
-                  <a href="mailto:contact@web3jobsboard.com" className="font-medium underline">
-                    contact@web3jobsboard.com
-                  </a>
-                </p>
-              </div>
+              <Mail className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
+              <p className="font-body text-sm text-foreground">
+                For fiat payment or bulk listings, contact us at{" "}
+                <a
+                  href="mailto:contact@web3jobsboard.com"
+                  className="underline decoration-[#CC0000] hover:text-[#CC0000] transition-colors duration-200"
+                >
+                  contact@web3jobsboard.com
+                </a>
+              </p>
             </div>
           </div>
         )}
 
-        {paymentStep === 'connect' && (
-          <div className="text-center space-y-6 py-8">
-            <div className="w-20 h-20 bg-purple-100 dark:bg-purple-900/20 rounded-full flex items-center justify-center mx-auto">
-              <Wallet className="h-10 w-10 text-purple-600 dark:text-purple-400" />
+        {paymentStep === "connect" && (
+          <div className="text-center space-y-5 py-8 border border-foreground p-6">
+            <div className="w-16 h-16 border-2 border-foreground flex items-center justify-center mx-auto">
+              <Wallet className="h-8 w-8 text-foreground" />
             </div>
             <div className="space-y-2">
-              <h3 className="font-semibold text-lg">Connect Your Wallet</h3>
-              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                Connect your wallet to proceed with the payment. We support MetaMask, WalletConnect, and other popular wallets.
+              <h3 className="font-headline text-xl font-black uppercase tracking-tight">
+                Connect Your Wallet
+              </h3>
+              <p className="font-body text-sm text-muted-foreground max-w-sm mx-auto">
+                Connect your wallet to proceed. We support MetaMask, WalletConnect,
+                and other popular wallets.
               </p>
             </div>
             <Button onClick={() => open()} size="lg" className="min-w-[200px]">
@@ -315,72 +490,84 @@ export default function PaymentCheckoutForm({ job }: Props) {
           </div>
         )}
 
-        {paymentStep === 'select' && isConnected && (
-          <div className="space-y-6">
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+        {paymentStep === "select" && isConnected && (
+          <div className="space-y-4">
+            <div className="border border-foreground p-4 bg-muted/10">
               <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                <AlertCircle className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <h4 className="font-medium text-sm text-blue-900 dark:text-blue-100">Connected Wallet</h4>
-                  <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                  <p className="font-sans text-[9px] uppercase tracking-widest text-muted-foreground">
+                    Connected Wallet
+                  </p>
+                  <p className="font-mono text-xs mt-1">
                     {address?.slice(0, 6)}...{address?.slice(-4)}
                   </p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                    Network: {getNetworkName()}
+                  <p className="font-sans text-[10px] text-muted-foreground mt-1">
+                    Network: {chainPaymentConfig?.name ?? "Unknown Network"}
                   </p>
                 </div>
               </div>
             </div>
 
-            {!isCorrectNetwork() && (
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+            {!isCorrectNetwork && (
+              <div className="border-2 border-foreground p-4">
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                  <AlertCircle className="h-4 w-4 text-foreground mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <h4 className="font-medium text-sm text-yellow-900 dark:text-yellow-100">Wrong Network</h4>
-                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
-                      Please switch to one of these supported networks:
+                    <p className="font-sans text-[9px] uppercase tracking-widest mb-1">
+                      Wrong Network
                     </p>
-                    <ul className="text-xs text-yellow-600 dark:text-yellow-400 mt-2 space-y-1">
-                      <li>• Ethereum</li>
-                      <li>• Polygon</li>
-                      <li>• BNB Smart Chain</li>
-                      <li>• Base</li>
+                    <p className="font-body text-xs text-muted-foreground">
+                      Please switch to a supported network:
+                    </p>
+                    <ul className="font-sans text-[10px] mt-2 space-y-1 text-muted-foreground">
+                      <li>· Ethereum</li>
+                      <li>· Polygon</li>
+                      <li>· BNB Smart Chain</li>
+                      <li>· Base</li>
                     </ul>
                   </div>
                 </div>
               </div>
             )}
 
-            {isCorrectNetwork() && (
+            {isCorrectNetwork && (
               <>
                 <div>
-                  <h4 className="font-medium mb-3">Select Payment Token</h4>
+                  <p className="font-sans text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-3">
+                    Select Payment Token
+                  </p>
                   <div className="grid grid-cols-3 gap-3">
-                    {SUPPORTED_TOKENS.map((token) => (
+                    {SUPPORTED_PAYMENT_TOKENS.map((token) => (
                       <button
                         key={token}
                         onClick={() => setSelectedToken(token)}
-                        className={`relative p-4 rounded-lg border-2 transition-all ${
+                        className={`relative p-4 border-2 transition-all duration-200 ${
                           selectedToken === token
-                            ? "border-purple-600 bg-purple-50 dark:bg-purple-900/20"
-                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-muted-foreground hover:border-foreground"
                         }`}
                       >
                         <div className="flex flex-col items-center gap-2">
                           <Image
                             src={TOKEN_LOGOS[token]}
                             alt={token}
-                            width={40}
-                            height={40}
-                            className="rounded-full"
+                            width={36}
+                            height={36}
+                            className={`${
+                              selectedToken === token
+                                ? "grayscale invert"
+                                : "grayscale"
+                            }`}
                           />
-                          <span className="font-medium text-sm">{token}</span>
+                          <span className="font-sans text-[10px] uppercase tracking-widest">
+                            {token}
+                          </span>
                         </div>
                         {selectedToken === token && (
-                          <div className="absolute top-2 right-2">
-                            <div className="w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center">
-                              <Check className="h-3 w-3 text-white" />
+                          <div className="absolute top-1.5 right-1.5">
+                            <div className="w-4 h-4 bg-background flex items-center justify-center">
+                              <Check className="h-3 w-3 text-foreground" />
                             </div>
                           </div>
                         )}
@@ -389,12 +576,16 @@ export default function PaymentCheckoutForm({ job }: Props) {
                   </div>
                 </div>
 
-                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
-                  <div className="flex items-center gap-3">
-                    <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
-                    <div className="flex-1">
-                      <p className="text-sm text-green-800 dark:text-green-200 font-medium">
-                        Ready to pay {getPaymentAmount()} {selectedToken} on {getNetworkName()}
+                <div className="border border-foreground p-4 bg-muted/20">
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck className="h-4 w-4 text-foreground flex-shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="font-sans text-[10px] uppercase tracking-widest">
+                        Ready to pay {paymentAmount} {selectedToken} on {chainPaymentConfig?.name}
+                      </p>
+                      <p className="font-body text-xs text-muted-foreground">
+                        After the transfer confirms, we will ask for one wallet
+                        signature to bind the payment to this listing.
                       </p>
                     </div>
                   </div>
@@ -404,178 +595,216 @@ export default function PaymentCheckoutForm({ job }: Props) {
           </div>
         )}
 
-        {(paymentStep === 'processing' || isWriting || isConfirming) && (
-          <div className="text-center space-y-6 py-8">
-            <div className="w-20 h-20 bg-purple-100 dark:bg-purple-900/20 rounded-full flex items-center justify-center mx-auto">
-              <Loader2 className="h-10 w-10 text-purple-600 dark:text-purple-400 animate-spin" />
+        {(paymentStep === "processing" ||
+          paymentStep === "signing" ||
+          paymentStep === "verifying" ||
+          isWriting ||
+          isConfirming ||
+          isSigning) && (
+          <div className="text-center space-y-5 py-8 border border-foreground p-6">
+            <div className="w-16 h-16 border-2 border-foreground flex items-center justify-center mx-auto">
+              <Loader2 className="h-8 w-8 text-foreground animate-spin" />
             </div>
             <div className="space-y-2">
-              <h3 className="font-semibold text-lg">
-                {isWriting ? 'Confirming Transaction' :
-                  isConfirming ? 'Processing Payment' :
-                  'Initializing...'}
+              <h3 className="font-headline text-xl font-black uppercase tracking-tight">
+                {isWriting || paymentStep === "processing"
+                  ? "Confirming Transaction"
+                  : isConfirming
+                  ? "Processing Payment"
+                  : paymentStep === "signing" || isSigning
+                  ? "Verify Payment"
+                  : "Publishing Listing"}
               </h3>
-              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                {isWriting ? 'Please confirm the transaction in your wallet' :
-                  isConfirming ? 'Waiting for blockchain confirmation...' :
-                  'Please wait...'}
+              <p className="font-body text-sm text-muted-foreground max-w-sm mx-auto">
+                {isWriting || paymentStep === "processing"
+                  ? "Please confirm the token transfer in your wallet."
+                  : isConfirming
+                  ? "Waiting for blockchain confirmation..."
+                  : paymentStep === "signing" || isSigning
+                  ? "Sign the verification message to link this payment to your listing."
+                  : "Verifying the payment and publishing your listing..."}
               </p>
-              {hash && (
-                <p className="text-xs text-muted-foreground mt-4">
-                  Transaction: {hash.slice(0, 10)}...{hash.slice(-8)}
+              {transactionHash && (
+                <p className="font-sans text-[10px] text-muted-foreground mt-4">
+                  Transaction: {transactionHash.slice(0, 10)}...
+                  {transactionHash.slice(-8)}
                 </p>
               )}
             </div>
           </div>
         )}
 
-        {paymentStep === 'success' && (
-          <div className="space-y-6">
-            <div className="text-center space-y-4 py-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto animate-scale-in shadow-lg">
-                <Check className="h-10 w-10 text-white" />
+        {paymentStep === "success" && finalJobData && (
+          <div className="space-y-5">
+            <div className="bg-foreground text-background p-6 text-center space-y-3">
+              <div className="w-14 h-14 border-2 border-background flex items-center justify-center mx-auto">
+                <Check className="h-7 w-7 text-background" />
               </div>
-              <div className="space-y-2">
-                <h3 className="font-semibold text-2xl bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">
-                  Payment Successful!
+              <div>
+                <h3 className="font-headline text-2xl font-black uppercase tracking-tight">
+                  Payment Verified
                 </h3>
-                <p className="text-muted-foreground">
-                  Your job listing is now live and visible to thousands of candidates
+                <p className="font-sans text-[10px] uppercase tracking-widest text-background/70 mt-1">
+                  Your listing is now live and visible to candidates
                 </p>
               </div>
             </div>
 
-            {finalJobData && (
-              <div className="space-y-4">
-                <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900/50 dark:to-gray-800/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-semibold text-gray-900 dark:text-gray-100">Transaction Complete</h4>
-                    <Check className="h-5 w-5 text-green-600" />
+            <div className="space-y-4">
+              <div className="border border-foreground p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="font-sans text-[9px] uppercase tracking-[0.3em] text-muted-foreground">
+                    Transaction Complete
+                  </p>
+                  <Check className="h-4 w-4 text-foreground" />
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-body text-sm text-muted-foreground">
+                      Amount Paid
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Image
+                        src={TOKEN_LOGOS[selectedToken]}
+                        alt={selectedToken}
+                        width={18}
+                        height={18}
+                        className="grayscale"
+                      />
+                      <span className="font-sans text-sm font-bold">
+                        {paymentAmount} {selectedToken}
+                      </span>
+                    </div>
                   </div>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Amount Paid</span>
-                      <div className="flex items-center gap-2">
-                        <Image
-                          src={TOKEN_LOGOS[selectedToken]}
-                          alt={selectedToken}
-                          width={20}
-                          height={20}
-                          className="rounded-full"
-                        />
-                        <span className="font-medium">{getPaymentAmount()} {selectedToken}</span>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Network</span>
-                      <span className="text-sm font-medium">{getNetworkName()}</span>
-                    </div>
-                    {txHash && (
+                  <div className="h-px bg-muted" />
+                  <div className="flex justify-between items-center">
+                    <span className="font-body text-sm text-muted-foreground">
+                      Network
+                    </span>
+                    <span className="font-sans text-sm">
+                      {getChainPaymentConfig(
+                        submittedPayment?.chainId ?? normalizedChainId ?? 0
+                      )?.name}
+                    </span>
+                  </div>
+                  {transactionHash && activeExplorerUrl && (
+                    <>
+                      <div className="h-px bg-muted" />
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Transaction</span>
+                        <span className="font-body text-sm text-muted-foreground">
+                          Transaction
+                        </span>
                         <a
-                          href={`${getBlockExplorerUrl()}/tx/${txHash}`}
+                          href={`${activeExplorerUrl}/tx/${transactionHash}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
+                          className="font-mono text-[10px] inline-flex items-center gap-1 underline decoration-[#CC0000] hover:text-[#CC0000] transition-colors duration-200"
                         >
-                          {txHash.slice(0, 8)}...{txHash.slice(-6)}
+                          {transactionHash.slice(0, 8)}...{transactionHash.slice(-6)}
                           <ExternalLink className="h-3 w-3" />
                         </a>
                       </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex justify-center gap-3 pt-4">
-                  <Button
-                    onClick={() => router.push(`/job-details/${finalJobData.id}`)}
-                    size="lg"
-                    className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md"
-                  >
-                    View Your Job
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                  <Button
-                    onClick={() => router.push('/')}
-                    variant="outline"
-                    size="lg"
-                    className="border-gray-300 dark:border-gray-600"
-                  >
-                    <Home className="h-4 w-4 mr-2" />
-                    Go Home
-                  </Button>
+                    </>
+                  )}
                 </div>
               </div>
-            )}
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Button
+                  onClick={() => router.push(`/job-details/${finalJobData.id}`)}
+                  size="lg"
+                  className="flex-1"
+                >
+                  View Your Job
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+                <Button
+                  onClick={() => router.push("/")}
+                  variant="outline"
+                  size="lg"
+                  className="flex-1"
+                >
+                  <Home className="h-4 w-4 mr-2" />
+                  Go Home
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
-        {paymentStep === 'error' && (
-          <div className="text-center space-y-6 py-8">
-            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto">
-              <X className="h-10 w-10 text-red-600 dark:text-red-400" />
+        {paymentStep === "error" && (
+          <div className="text-center space-y-5 py-8 border-2 border-foreground p-6">
+            <div className="w-16 h-16 border-2 border-foreground flex items-center justify-center mx-auto">
+              <X className="h-8 w-8 text-foreground" />
             </div>
             <div className="space-y-2">
-              <h3 className="font-semibold text-lg">Payment Failed</h3>
-              <div className="max-w-sm mx-auto">
-                <p className="text-sm text-red-600 dark:text-red-400 break-words">
-                  {error || 'The transaction failed. Please try again.'}
-                </p>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Make sure you have enough tokens and gas in your wallet.
+              <h3 className="font-headline text-xl font-black uppercase tracking-tight">
+                Verification Incomplete
+              </h3>
+              <p className="font-body text-sm text-muted-foreground max-w-sm mx-auto break-words">
+                {error || "The payment could not be verified. Please try again."}
+              </p>
+              <p className="font-sans text-[10px] uppercase tracking-widest text-muted-foreground mt-2">
+                {canRetryVerification
+                  ? "If your payment already went through, retry verification."
+                  : "Check your token balance and gas funds."}
               </p>
             </div>
           </div>
         )}
-      </CardContent>
+      </div>
 
-      <CardFooter className="rounded-b-lg">
-        {paymentStep === 'select' && isCorrectNetwork() && (
+      <div className="border-t border-foreground px-6 py-4">
+        {paymentStep === "select" && isCorrectNetwork && (
           <Button
             onClick={handlePayment}
             disabled={!isConnected || !selectedToken}
-            className={`w-full ${spline_sans_reg.className}`}
+            className="w-full"
             size="lg"
           >
             Confirm Payment
           </Button>
         )}
 
-        {paymentStep === 'error' && (
-          <div className="flex flex-col md:flex-row w-full space-y-3 md:space-y-0 md:space-x-3">
+        {paymentStep === "error" && (
+          <div className="flex flex-col md:flex-row w-full gap-3">
+            {canRetryVerification ? (
+              <Button onClick={retryVerification} className="w-full" size="lg">
+                Retry Verification
+              </Button>
+            ) : (
+              <Button
+                onClick={resetCheckout}
+                variant="default"
+                className="w-full"
+                size="lg"
+              >
+                Try Again
+              </Button>
+            )}
+
             <Button
-              onClick={() => {
-                setPaymentStep('select');
-                setError('');
-                resetWrite();
-              }}
-              variant="default"
-              className="w-full"
-              size="lg"
-            >
-              Try Again
-            </Button>
-            <Button
-              onClick={() => window.location.reload()}
+              onClick={() => router.push("/")}
               variant="outline"
               className="w-full"
               size="lg"
             >
-              Start Over
+              Go Home
             </Button>
           </div>
         )}
 
-        {(paymentStep === 'processing' || isWriting || isConfirming) && (
-          <div className="w-full text-center">
-            <p className="text-xs text-muted-foreground">
-              Do not close this window or refresh the page
-            </p>
-          </div>
+        {(paymentStep === "processing" ||
+          paymentStep === "signing" ||
+          paymentStep === "verifying" ||
+          isWriting ||
+          isConfirming ||
+          isSigning) && (
+          <p className="font-sans text-[10px] uppercase tracking-widest text-muted-foreground text-center">
+            Do not close this window or refresh the page
+          </p>
         )}
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }

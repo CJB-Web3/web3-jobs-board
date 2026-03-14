@@ -1,19 +1,11 @@
 import { companyFormSchema } from "@/lib/schemas";
-import { CompanyForm } from "@/lib/types";
+import { CompanyForm, ReusableCompany } from "@/lib/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { HiOutlineBuildingOffice } from "react-icons/hi2";
 import { z } from "zod";
 import RichTextEditor from "./rich-text-editor";
 import { Button } from "./ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "./ui/card";
 import { FileUpload } from "./ui/file-upload";
 import {
   Form,
@@ -24,9 +16,8 @@ import {
   FormMessage,
 } from "./ui/form";
 import { Input } from "./ui/input";
-import { useEffect, useState } from "react";
-import { getCompanies } from "@/lib/actions";
-import { companyData } from "@/lib/types";
+import { useState } from "react";
+import { richTextToPlainText } from "@/lib/rich-text";
 import {
   Select,
   SelectContent,
@@ -34,16 +25,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import Image from "next/image";
 import {ChevronRight} from "lucide-react";
 
 type Props = {
+  companies: ReusableCompany[];
   defaultValues: CompanyForm;
   handleStep0: (formData: CompanyForm) => void;
 };
 
-export default function CompanyInfoForm({ defaultValues, handleStep0 }: Props) {
-  const [companies, setCompanies] = useState<companyData[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function CompanyInfoForm({
+  companies,
+  defaultValues,
+  handleStep0,
+}: Props) {
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof companyFormSchema>>({
@@ -59,21 +54,6 @@ export default function CompanyInfoForm({ defaultValues, handleStep0 }: Props) {
     return new File([blob], filename, { type: mimeType });
   };
 
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        const companiesData = await getCompanies();
-        setCompanies(companiesData);
-      } catch (error) {
-        console.error("Error fetching companies:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCompanies();
-  }, []);
-
-  // Handler for existing-company submission, including logo file conversion
   const handleExistingSubmit = async () => {
     if (!selectedCompanyId) return;
     const selected = companies.find(
@@ -83,21 +63,24 @@ export default function CompanyInfoForm({ defaultValues, handleStep0 }: Props) {
       let logoFile: File | null = null;
       if (selected.companyLogo) {
         try {
-          // derive filename and type from URL if possible
           const urlParts = selected.companyLogo.split("/");
           const rawFilename = urlParts[urlParts.length - 1] || "logo.png";
-          const extension = rawFilename.split('.').pop() || 'png';
+          const extension = rawFilename.split(".").pop() || "png";
           const mimeType = `image/${extension}`;
-          logoFile = await urlToFile(selected.companyLogo, rawFilename, mimeType);
-        } catch (error) {
-          console.error("Error fetching logo as file:", error);
+          logoFile = await urlToFile(
+            selected.companyLogo,
+            rawFilename,
+            mimeType
+          );
+        } catch {
+          logoFile = null;
         }
       }
       const companyFormData: CompanyForm = {
         companyName: selected.companyName,
-        companyDescription: selected.companyDescription,
+        companyDescription: selected.companyDescription ?? "",
         companyLogo: logoFile,
-        companyWebsite: selected.companyWebsite,
+        companyWebsite: selected.companyWebsite ?? "",
         companyEmail: selected.companyEmail || "",
         companyTwitter: selected.companyTwitter || "",
         companyDiscord: selected.companyDiscord || "",
@@ -114,20 +97,27 @@ export default function CompanyInfoForm({ defaultValues, handleStep0 }: Props) {
   const selectedCompany = selectedCompanyId
     ? companies.find((company) => company.id.toString() === selectedCompanyId)
     : null;
+  const selectedCompanyDescription = richTextToPlainText(
+    selectedCompany?.companyDescription
+  );
 
   return (
-    <Card className="dark:shadow-purple-900 py-4">
-      <CardHeader>
-        <CardTitle className="flex gap-2 items-center">
+    <div className="border border-foreground">
+      {/* Section header */}
+      <div className="border-b border-foreground px-6 py-4">
+        <p className="font-sans text-[10px] uppercase tracking-[0.3em] text-[#CC0000] mb-1">
+          ■ Step 1
+        </p>
+        <h2 className="font-headline text-2xl font-black uppercase tracking-tight flex gap-2 items-center">
           <HiOutlineBuildingOffice className="w-6 h-6" />
-          <p>Company Information</p>
-        </CardTitle>
-        <CardDescription>
+          Company Information
+        </h2>
+        <p className="font-sans text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
           {selectedCompany
             ? "You've selected an existing company. Click Next to continue."
-            : "Please fill in the fields with your company details or select an existing company"}
-        </CardDescription>
-      </CardHeader>
+            : "Fill in your company details or select an existing company"}
+        </p>
+      </div>
 
       <Form {...form}>
         <form
@@ -140,7 +130,7 @@ export default function CompanyInfoForm({ defaultValues, handleStep0 }: Props) {
             }
           }}
         >
-          <CardContent className="flex flex-col gap-4">
+          <div className="flex flex-col gap-5 px-6 py-5">
             {/* Company Selection Dropdown */}
             <div className="space-y-1">
               <FormLabel>Select Company</FormLabel>
@@ -154,15 +144,10 @@ export default function CompanyInfoForm({ defaultValues, handleStep0 }: Props) {
                   }
                 }}
                 value={selectedCompanyId || "new"}
-                disabled={loading}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue
-                    placeholder={
-                      loading
-                        ? "Loading companies..."
-                        : "Select an existing company or create new"
-                    }
+                    placeholder="Select an existing company or create new"
                   />
                 </SelectTrigger>
                 <SelectContent>
@@ -177,69 +162,69 @@ export default function CompanyInfoForm({ defaultValues, handleStep0 }: Props) {
             </div>
 
             {selectedCompany && (
-              <div className="border rounded-lg p-4 bg-muted/10">
+              <div className="border border-foreground p-4 bg-muted/10">
                 <div className="flex items-start gap-4">
                   {selectedCompany.companyLogo && (
-                    <div className="h-16 w-16 rounded-md border bg-background flex-shrink-0 flex items-center justify-center overflow-hidden">
-                      <img 
-                        src={selectedCompany.companyLogo} 
+                    <div className="h-16 w-16 border border-foreground bg-background flex-shrink-0 flex items-center justify-center overflow-hidden">
+                      <Image
+                        src={selectedCompany.companyLogo}
                         alt={`${selectedCompany.companyName} logo`}
-                        className="h-full w-full object-contain"
+                        width={64}
+                        height={64}
+                        className="h-full w-full object-contain grayscale"
                       />
                     </div>
                   )}
                   
                   <div className="flex-1">
                     <h3 className="font-medium text-lg">{selectedCompany.companyName}</h3>
-                    
-                    <div className="mt-1 text-sm text-muted-foreground"
-                      dangerouslySetInnerHTML={{ 
-                        __html: selectedCompany.companyDescription.length > 150 
-                          ? selectedCompany.companyDescription.substring(0, 150) + '...' 
-                          : selectedCompany.companyDescription 
-                      }}
-                    />
-                    
+
+                    <p className="mt-1 font-body text-sm text-muted-foreground">
+                      {selectedCompanyDescription.length > 150
+                        ? `${selectedCompanyDescription.slice(0, 150)}...`
+                        : selectedCompanyDescription}
+                    </p>
+
                     <div className="mt-3 grid gap-1">
                       {selectedCompany.companyWebsite && (
-                        <div className="flex gap-2 text-sm">
-                          <span className="font-medium">Website:</span>
-                          <a 
-                            href={selectedCompany.companyWebsite} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="text-primary hover:underline truncate"
+                        <div className="flex gap-2 font-sans text-[10px] uppercase tracking-widest">
+                          <span className="text-muted-foreground">Website:</span>
+                          <a
+                            href={selectedCompany.companyWebsite}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-foreground underline decoration-[#CC0000] hover:text-[#CC0000] truncate transition-colors duration-200"
                           >
                             {selectedCompany.companyWebsite}
                           </a>
                         </div>
                       )}
-                      
+
                       {selectedCompany.companyEmail && (
-                        <div className="flex gap-2 text-sm">
-                          <span className="font-medium">Email:</span>
-                          <span>{selectedCompany.companyEmail}</span>
+                        <div className="flex gap-2 font-sans text-[10px] uppercase tracking-widest">
+                          <span className="text-muted-foreground">Email:</span>
+                          <span className="text-foreground">{selectedCompany.companyEmail}</span>
                         </div>
                       )}
-                      
+
                       <div className="flex gap-4 mt-1">
                         {selectedCompany.companyTwitter && (
-                          <a 
-                            href={selectedCompany.companyTwitter} 
-                            target="_blank" 
+                          <a
+                            href={selectedCompany.companyTwitter}
+                            target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-primary hover:underline"
+                            className="font-sans text-[10px] uppercase tracking-widest text-foreground underline decoration-[#CC0000] hover:text-[#CC0000] transition-colors duration-200"
                           >
                             Twitter/X
                           </a>
                         )}
-                        
+
                         {selectedCompany.companyDiscord && (
-                          <a 
-                            href={selectedCompany.companyDiscord} 
-                            target="_blank" 
+                          <a
+                            href={selectedCompany.companyDiscord}
+                            target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-primary hover:underline"
+                            className="font-sans text-[10px] uppercase tracking-widest text-foreground underline decoration-[#CC0000] hover:text-[#CC0000] transition-colors duration-200"
                           >
                             Discord
                           </a>
@@ -300,7 +285,7 @@ export default function CompanyInfoForm({ defaultValues, handleStep0 }: Props) {
                     <FormItem>
                       <FormLabel htmlFor="companyLogo">Logo</FormLabel>
                       <FormControl>
-                        <div className="rounded-md border">
+                        <div className="border border-foreground">
                           <FileUpload
                             onChange={(files) =>
                               files.length > 0 && onChange(files[files.length - 1])
@@ -397,13 +382,13 @@ export default function CompanyInfoForm({ defaultValues, handleStep0 }: Props) {
               </>
             )}
 
-          </CardContent>
+          </div>
 
-          <CardFooter className="mt-2 flex justify-end">
+          <div className="border-t border-foreground px-6 py-4 flex justify-end">
             <Button type="submit">Next <ChevronRight className="h-4 w-4" /></Button>
-          </CardFooter>
+          </div>
         </form>
       </Form>
-    </Card>
+    </div>
   );
 }

@@ -266,7 +266,57 @@ export const paymentFormSchema = z.object({
   jobPkg: z.enum(["pkg-1", "pkg-2"], {
     required_error: "You must select a job package",
   }),
-  paymentCurrency: z.enum(["usd", "eur", "gbp"], {
-    required_error: "You must select a payment currency",
+  paymentCurrency: z.literal("usd"),
+});
+
+const supportedLogoMimeTypes = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+] as const;
+
+export const companyLogoUploadSchema = z.object({
+  name: z.string().min(1, "Company logo name is required."),
+  type: z.enum(supportedLogoMimeTypes, {
+    errorMap: () => ({
+      message: "Your company logo needs to be in jpg, jpeg, png, or webp format",
+    }),
   }),
+  base64: z
+    .string()
+    .regex(
+      /^data:image\/(?:jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/,
+      "Company logo must be a valid base64 image payload"
+    ),
+});
+
+export const serverCompanyFormSchema = z.object({
+  companyName: companyFormSchema.shape.companyName,
+  companyDescription: companyFormSchema.shape.companyDescription,
+  companyWebsite: companyFormSchema.shape.companyWebsite,
+  companyTwitter: companyFormSchema.shape.companyTwitter,
+  companyDiscord: companyFormSchema.shape.companyDiscord,
+  companyEmail: companyFormSchema.shape.companyEmail,
+  companyLogo: companyLogoUploadSchema,
+});
+
+export const jobPostingMetaSchema = z.object({
+  featured: z.boolean(),
+  paymentCurrency: z.literal("usd").default("usd"),
+});
+
+export const finalizeJobPaymentSchema = z.object({
+  jobId: z.number().int().positive(),
+  chainId: z.number().int().positive(),
+  txHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/, "Invalid transaction hash"),
+  signer: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Invalid signer address"),
+  signature: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]+$/, "Invalid payment verification signature"),
+});
+
+export const applyJobCouponCodeSchema = z.object({
+  jobId: z.number().int().positive(),
+  code: z.string().trim().min(1, "Coupon code is required"),
 });

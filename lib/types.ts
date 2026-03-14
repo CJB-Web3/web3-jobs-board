@@ -44,7 +44,7 @@ export type JobListing = JobForm & CompanyForm;
 
 export type PaymentForm = {
   jobPkg: string;
-  paymentCurrency: "usd" | "eur" | "gbp";
+  paymentCurrency: "usd";
 };
 
 export type JobData = {
@@ -52,11 +52,11 @@ export type JobData = {
   created_at: string;
   companyName?: string;
   companyDescription?: string;
-  companyLogo?: string;
-  companyWebsite?: string;
-  companyEmail?: string;
-  companyTwitter?: string;
-  companyDiscord?: string;
+  companyLogo?: string | null;
+  companyWebsite?: string | null;
+  companyEmail?: string | null;
+  companyTwitter?: string | null;
+  companyDiscord?: string | null;
   jobTitle?: string;
   jobDescription?: string;
   role?:
@@ -72,34 +72,49 @@ export type JobData = {
   freelance?: boolean;
   internship?: boolean;
   jobLocation?: "remote" | "onsite" | "hybrid";
-  locationDetails?: string;
+  locationDetails?: string | null;
   remoteOption?: "global" | "geographic" | "timezone";
-  geographicRestrictions?: string;
-  timezoneRestrictions?: string;
+  geographicRestrictions?: string | null;
+  timezoneRestrictions?: string | null;
   keywords?: string;
   salaryCurrency?: "USD" | "EUR" | "GBP" | null;
   minSalary?: string | null;
   maxSalary?: string | null;
   minEquity?: string | null;
   maxEquity?: string | null;
-  paymentMethod?: "Cash" | "Cryptocurrency" | "Cash/Crypto";
+  paymentMethod?: "Cash" | "Cryptocurrency" | "Hybrid" | null;
   applyMethod?: "website" | "email";
-  applyEmail?: string;
-  applyWebsite?: string;
+  applyEmail?: string | null;
+  applyWebsite?: string | null;
   featured: boolean;
   paymentStatus: "unpaid" | "paid";
-  paymentCurrency: "usd" | "eur" | "gbp";
+  paymentCurrency: "usd";
   payableAmount: number;
+  expiryDate?: string | null;
+  transactionHash?: string | null;
 };
 
-export type companyData = {
+export type CompanyData = {
   id: number;
   companyName: string;
-  companyDescription: string;
-  companyLogo: string;
-  companyWebsite: string;
+  companyDescription: string | null;
+  companyLogo: string | null;
+  companyWebsite: string | null;
   companyEmail: string | null;
   companyTwitter: string | null;
   companyDiscord: string | null;
   activeJobs: JobData[];
+};
+
+export type companyData = CompanyData;
+
+export type ReusableCompany = {
+  id: number;
+  companyName: string;
+  companyDescription: string | null;
+  companyLogo: string | null;
+  companyWebsite: string | null;
+  companyEmail: string | null;
+  companyTwitter: string | null;
+  companyDiscord: string | null;
 };

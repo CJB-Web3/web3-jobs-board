@@ -4,32 +4,60 @@ import Script from "next/script";
 import HeroSection from "@/components/HeroSection";
 import JobsSection from "@/components/JobsSection";
 import SpinnerJobs from "@/components/SpinnerJobs";
-import { getJobKeywords, getJobListings } from "@/lib/actions";
+import { getJobKeywords, getJobListings } from "@/lib/jobs";
 import { Metadata } from "next";
 
 const SITE_URL = "https://www.web3jobsboard.com";
 
+const CORE_KEYWORDS = [
+  "web3 jobs",
+  "blockchain jobs",
+  "crypto jobs",
+  "DeFi jobs",
+  "NFT jobs",
+  "remote web3 jobs",
+  "blockchain developer jobs",
+  "smart contract jobs",
+  "web3 careers",
+  "crypto careers",
+  "blockchain careers",
+  "web3 job board",
+  "cryptocurrency jobs",
+  "Solidity developer jobs",
+  "web3 marketing jobs",
+  "web3 engineer",
+  "crypto remote jobs",
+];
+
 export async function generateMetadata(): Promise<Metadata> {
-  const keywords = await getJobKeywords();
+  const dynamicKeywords = await getJobKeywords();
+  const allKeywords = [...new Set([...CORE_KEYWORDS, ...dynamicKeywords])];
   const description =
-    "Browse and post Web3 & crypto job listings—remote engineering, design, marketing and more on Web3JobsBoard.";
+    "Find the best Web3 jobs, blockchain careers, and crypto opportunities. Browse remote DeFi, NFT, engineering, design, and marketing roles on Web3 Jobs Board.";
   return {
-    title: "Web3 Jobs Board | Web3 & Crypto Careers",
+    title: "Web3 Jobs Board | #1 Blockchain & Crypto Job Board",
     description,
-    keywords: keywords.join(", "),
+    keywords: allKeywords.join(", "),
     alternates: { canonical: SITE_URL },
     openGraph: {
-      title: "Web3 Jobs Board | Web3 & Crypto Careers",
+      title: "Web3 Jobs Board | #1 Blockchain & Crypto Job Board",
       description,
       url: SITE_URL,
       siteName: "Web3 Jobs Board",
-      images: [{ url: `${SITE_URL}/og-image.png`, width: 1200, height: 630 }],
+      images: [
+        {
+          url: `${SITE_URL}/og-image.png`,
+          width: 1200,
+          height: 630,
+          alt: "Web3 Jobs Board - Find Top Web3, Blockchain & Crypto Jobs",
+        },
+      ],
       locale: "en_US",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "Web3 Jobs Board | Web3 & Crypto Careers",
+      title: "Web3 Jobs Board | #1 Blockchain & Crypto Job Board",
       description,
       images: [`${SITE_URL}/og-image.png`],
       site: "@Web3JobsBoard",
@@ -55,7 +83,7 @@ export default async function Page() {
     itemListElement: jobs.map((job, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      url: `${SITE_URL}/jobs/${job.id}`,
+      url: `${SITE_URL}/job-details/${job.id}`,
       item: {
         "@type": "JobPosting",
         title: job.jobTitle,
@@ -85,7 +113,7 @@ export default async function Page() {
           logo: job.companyLogo,
         },
         employmentLocationType: job.jobLocation?.toUpperCase(),
-        description: job.jobDescription,
+        description: job.jobDescription ?? undefined,
         baseSalary: job.minSalary
           ? {
               "@type": "MonetaryAmount",
@@ -105,13 +133,26 @@ export default async function Page() {
   const webSiteLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Web3JobsBoard",
+    name: "Web3 Jobs Board",
     url: SITE_URL,
     potentialAction: {
       "@type": "SearchAction",
       target: `${SITE_URL}/?search={search_term_string}`,
       "query-input": "required name=search_term_string",
     },
+  };
+
+  const organizationLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Web3 Jobs Board",
+    url: SITE_URL,
+    logo: `${SITE_URL}/og-image.png`,
+    sameAs: [
+      "https://twitter.com/Web3JobsBoard",
+    ],
+    description:
+      "Web3 Jobs Board is the leading job board for Web3, blockchain, DeFi, NFT, and crypto careers. Find remote and on-site roles across engineering, design, marketing, and more.",
   };
 
   return (
@@ -128,6 +169,13 @@ export default async function Page() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(webSiteLd),
+        }}
+      />
+      <Script
+        id="schema-organization"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(organizationLd),
         }}
       />
 

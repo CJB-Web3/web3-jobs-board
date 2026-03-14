@@ -28,14 +28,6 @@ import { useForm } from "react-hook-form";
 import { HiOutlineBriefcase } from "react-icons/hi2";
 import { z } from "zod";
 import RichTextEditor from "./rich-text-editor";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "./ui/card";
 import {ChevronLeft, ChevronRight} from "lucide-react";
 type Props = {
   handleStep1: (data: JobForm) => void;
@@ -66,20 +58,24 @@ function JobInfoForm({ handleStep1, defaultValues, handleBack }: Props) {
   }
 
   return (
-    <Card className="py-4">
-      <CardHeader>
-        <CardTitle className="flex gap-2 items-center">
+    <div className="border border-foreground">
+      {/* Section header */}
+      <div className="border-b border-foreground px-6 py-4">
+        <p className="font-sans text-[10px] uppercase tracking-[0.3em] text-[#CC0000] mb-1">
+          ■ Step 2
+        </p>
+        <h2 className="font-headline text-2xl font-black uppercase tracking-tight flex gap-2 items-center">
           <HiOutlineBriefcase className="w-6 h-6" />
-          <p>Job Information</p>
-        </CardTitle>
-        <CardDescription>
-          Please fillup the fields with your relevant job details
-        </CardDescription>
-      </CardHeader>
+          Job Information
+        </h2>
+        <p className="font-sans text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+          Fill in the relevant job details for your listing
+        </p>
+      </div>
 
       <Form {...form}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="flex flex-col gap-4">
+          <div className="flex flex-col gap-5 px-6 py-5">
             <FormField
               control={control}
               name="jobTitle"
@@ -260,7 +256,7 @@ function JobInfoForm({ handleStep1, defaultValues, handleBack }: Props) {
 
                       <FormItem className="flex items-center space-x-2 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="Cash/Crypto" />
+                          <RadioGroupItem value="hybrid" />
                         </FormControl>
                         <FormLabel>Hybrid</FormLabel>
                       </FormItem>
@@ -645,17 +641,17 @@ function JobInfoForm({ handleStep1, defaultValues, handleBack }: Props) {
                 )}
               />
             )}
-          </CardContent>
+          </div>
 
-          <CardFooter className="mt-2 flex justify-between">
+          <div className="border-t border-foreground px-6 py-4 flex justify-between">
             <Button type="button" variant={"outline"} onClick={handleBack}>
               <ChevronLeft className="h-4 w-4" /> Go back
             </Button>
             <Button type="submit">Preview <ChevronRight className="h-4 w-4" /></Button>
-          </CardFooter>
+          </div>
         </form>
       </Form>
-    </Card>
+    </div>
   );
 }
 

@@ -1,13 +1,5 @@
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Form,
   FormControl,
   FormField,
@@ -56,20 +48,24 @@ export default function PaymentInfo({
   }
 
   return (
-    <Card className="py-4">
+    <div className="border border-foreground">
       <Form {...form}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <CardHeader>
-            <CardTitle className="flex gap-2 items-center">
+          {/* Section header */}
+          <div className="border-b border-foreground px-6 py-4">
+            <p className="font-sans text-[10px] uppercase tracking-[0.3em] text-[#CC0000] mb-1">
+              ■ Step 4
+            </p>
+            <h2 className="font-headline text-2xl font-black uppercase tracking-tight flex gap-2 items-center">
               <FaBitcoin className="w-6 h-6" />
-              <p>Payment Information</p>
-            </CardTitle>
-            <CardDescription>
+              Payment Information
+            </h2>
+            <p className="font-sans text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
               Select your package and pay with cryptocurrency
-            </CardDescription>
-          </CardHeader>
+            </p>
+          </div>
 
-          <CardContent className="flex flex-col gap-4">
+          <div className="flex flex-col gap-5 px-6 py-5">
             <FormField
               control={control}
               name="jobPkg"
@@ -108,19 +104,19 @@ export default function PaymentInfo({
               )}
             />
 
-            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <h4 className="font-medium mb-2">Payment Methods Accepted:</h4>
-              <ul className="text-sm space-y-1">
-                <li>• USDC, USDT, or DAI</li>
-                <li>
-                  • Networks: Ethereum, Polygon, BNB Chain, Base (Testnet)
-                </li>
-                <li>• Connect your wallet in the next step</li>
+            <div className="border border-foreground p-4 bg-muted/20">
+              <p className="font-sans text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-2">
+                Payment Methods Accepted
+              </p>
+              <ul className="font-body text-sm space-y-1 text-foreground">
+                <li>· USDC, USDT, or DAI</li>
+                <li>· Networks: Ethereum, Polygon, BNB Chain, Base</li>
+                <li>· Connect your wallet in the next step</li>
               </ul>
             </div>
-          </CardContent>
+          </div>
 
-          {/* This is the new error display section */}
+          {/* Error display */}
           {submissionError && (
             <div className="px-6 pb-4">
               <Alert variant="destructive">
@@ -131,7 +127,7 @@ export default function PaymentInfo({
             </div>
           )}
 
-          <CardFooter className="mt-2 flex justify-between">
+          <div className="border-t border-foreground px-6 py-4 flex justify-between">
             <Button type="button" variant="outline" onClick={handleBack}>
               <ChevronLeft className="h-4 w-4" />
               Go back
@@ -140,7 +136,7 @@ export default function PaymentInfo({
             <Button type="submit" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? (
                 <>
-                  <span className="">Proceeding...</span>
+                  <span>Proceeding...</span>
                   <span className="animate-spin">
                     <Loader2 className="h-4 w-4" />
                   </span>
@@ -151,9 +147,9 @@ export default function PaymentInfo({
                 </>
               )}
             </Button>
-          </CardFooter>
+          </div>
         </form>
       </Form>
-    </Card>
+    </div>
   );
 }

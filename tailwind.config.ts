@@ -24,12 +24,24 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        headline: ["var(--font-playfair)", "Times New Roman", "serif"],
+        body: ["var(--font-lora)", "Georgia", "serif"],
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        mono: ["var(--font-jetbrains)", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        ink: "#111111",
+        paper: "#F9F9F7",
+        divider: "#E5E5E0",
+        red: {
+          press: "#CC0000",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -60,10 +72,10 @@ const config = {
         },
       },
       borderRadius: {
-        checkbox: "5px",
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        checkbox: "0px",
+        lg: "0px",
+        md: "0px",
+        sm: "0px",
       },
       keyframes: {
         "accordion-down": {
@@ -99,11 +111,6 @@ const config = {
           "bg-dot": (value: any) => ({
             backgroundImage: `url("${svgToDataUri(
               `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="16" height="16" fill="none"><circle fill="${value}" id="pattern-circle" cx="10" cy="10" r="1.6257413380501518"></circle></svg>`
-            )}")`,
-          }),
-          "bg-dot-thick": (value: any) => ({
-            backgroundImage: `url("${svgToDataUri(
-              `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="16" height="16" fill="none"><circle fill="${value}" id="pattern-circle" cx="10" cy="10" r="2.5"></circle></svg>`
             )}")`,
           }),
         },
