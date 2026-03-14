@@ -40,9 +40,3 @@ Optional:
 - `pnpm exec tsc --noEmit`
 - `pnpm lint`
 - `pnpm build`
-
-## Release Notes
-
-- Stripe code has been removed; checkout is crypto-only.
-- Existing-company reuse is limited to companies that have had a paid listing before.
-- Rich text is sanitized before storage and rendered through a single safe component.
