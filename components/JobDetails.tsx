@@ -191,7 +191,7 @@ export default function JobDetails({ job }: { job: JobData }) {
           </h3>
           <RichTextContent
             html={job.jobDescription}
-            className="prose prose-sm dark:prose-invert max-w-none text-foreground/80"
+            className="prose prose-sm dark:prose-invert max-w-none"
           />
         </section>
 

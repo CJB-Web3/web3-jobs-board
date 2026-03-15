@@ -156,7 +156,7 @@ export default function JobPreviewContent({
         </h3>
         <RichTextContent
           html={job.jobDescription}
-          className="whitespace-pre-wrap text-lg leading-relaxed text-muted-foreground"
+          className="prose prose-sm dark:prose-invert max-w-none"
         />
       </div>
     </div>

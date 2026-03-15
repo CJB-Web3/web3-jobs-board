@@ -140,9 +140,11 @@ export async function getCompanyJobs(companyName: string) {
 
 export async function getSimilarCompanies(companyName: string) {
   const liveCompanies = await getLiveCompanies();
-  return liveCompanies.filter(
-    (company) => company.companyName.toLowerCase() !== companyName.trim().toLowerCase()
-  );
+  return liveCompanies
+    .filter(
+      (company) => company.companyName.toLowerCase() !== companyName.trim().toLowerCase()
+    )
+    .slice(0, 6);
 }
 
 export async function getJobKeywords() {
@@ -156,7 +158,8 @@ export async function getJobKeywords() {
     throw error;
   }
 
-  const uniqueKeywords = new Set<string>();
+  // Deduplicate case-insensitively, preserving the first-seen casing
+  const seen = new Map<string, string>();
 
   for (const record of data ?? []) {
     const keywords = String(record.keywords ?? "")
@@ -165,9 +168,12 @@ export async function getJobKeywords() {
       .filter(Boolean);
 
     for (const keyword of keywords) {
-      uniqueKeywords.add(keyword);
+      const lower = keyword.toLowerCase();
+      if (!seen.has(lower)) {
+        seen.set(lower, keyword);
+      }
     }
   }
 
-  return Array.from(uniqueKeywords);
+  return Array.from(seen.values());
 }

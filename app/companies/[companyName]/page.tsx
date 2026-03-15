@@ -249,7 +249,7 @@ export default async function Page({
             </h2>
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               {companyJobs.map((job) => (
-                <div key={job.id} className="flex flex-col gap-2">
+                <div key={job.id} className="border border-foreground">
                   <JobCard job={job} />
                 </div>
               ))}

@@ -62,6 +62,10 @@ async function Page() {
           your next role with visionary startups redefining the digital
           landscape.
         </p>
+        <p className="font-mono text-sm text-muted-foreground">
+          <span className="font-bold text-foreground">{companies.length}</span>{" "}
+          {companies.length === 1 ? "company" : "companies"} listed
+        </p>
       </div>
 
       <Suspense fallback={<Spinner />}>
