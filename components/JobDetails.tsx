@@ -1,7 +1,7 @@
 import type { ElementType } from "react";
 import { useMemo } from "react";
 import { Righteous } from "next/font/google";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import RichTextContent from "@/components/RichTextContent";
 import { JobData } from "@/lib/types";
 import { formatDistanceFromNow, formatSalaryCurrency } from "@/lib/utils";
+import Image from "next/image";
 import {
   BriefcaseBusiness,
   CircleDollarSign,
@@ -140,9 +141,18 @@ export default function JobDetails({ job }: { job: JobData }) {
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-4">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8">
-          <Avatar className="h-24 w-24 border-2 border-primary">
-            <AvatarImage src={job.companyLogo || undefined} alt={job.companyName || "Company logo"} />
-            <AvatarFallback>{(job.companyName || "C")[0]}</AvatarFallback>
+          <Avatar className="h-24 w-24 border-2 border-primary relative overflow-hidden">
+            {job.companyLogo ? (
+              <Image
+                src={job.companyLogo}
+                alt={`${job.companyName} logo`}
+                fill
+                sizes="96px"
+                className="object-cover"
+              />
+            ) : (
+              <AvatarFallback>{(job.companyName || "C")[0]}</AvatarFallback>
+            )}
           </Avatar>
           <div className="text-center md:text-left">
             <h1 className={`text-5xl font-bold tracking-wide ${righteous.className}`}>

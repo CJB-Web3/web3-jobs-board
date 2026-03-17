@@ -14,7 +14,7 @@ export default function Footer() {
           <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-background/50 mb-1">
             Est. 2024
           </p>
-          <Link href="/" className="font-headline text-4xl font-black tracking-tight uppercase">
+          <Link href="/" aria-label="Web3 Jobs Board Home" title="Web3 Jobs Board Home" className="font-headline text-4xl font-black tracking-tight uppercase">
             WJB
           </Link>
         </div>
@@ -47,14 +47,16 @@ export default function Footer() {
             </p>
             <nav className="space-y-2">
               {[
-                { label: "Browse Jobs", href: "/#availableJobs" },
-                { label: "Post a Job", href: "/post-job" },
-                { label: "Companies", href: "/companies" },
-                { label: "Pricing", href: "/pricing" },
-              ].map(({ label, href }) => (
+                { label: "Browse Jobs", href: "/#availableJobs", title: "Browse Web3 Jobs" },
+                { label: "Post a Job", href: "/post-job", title: "Post a Job" },
+                { label: "Companies", href: "/companies", title: "Web3 Companies" },
+                { label: "Pricing", href: "/pricing", title: "Pricing" },
+              ].map(({ label, href, title }) => (
                 <Link
                   key={label}
                   href={href}
+                  aria-label={title}
+                  title={title}
                   className="block font-sans text-sm text-background/70 hover:text-[#CC0000] transition-colors duration-200 group"
                 >
                   <span className="inline-block w-3 opacity-0 group-hover:opacity-100 transition-opacity">→</span>

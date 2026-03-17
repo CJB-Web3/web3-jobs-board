@@ -168,6 +168,7 @@ export default function CompanyInfoForm({
                     <div className="h-16 w-16 border border-foreground bg-background flex-shrink-0 flex items-center justify-center overflow-hidden">
                       <Image
                         src={selectedCompany.companyLogo}
+                        referrerPolicy="no-referrer"
                         alt={`${selectedCompany.companyName} logo`}
                         width={64}
                         height={64}

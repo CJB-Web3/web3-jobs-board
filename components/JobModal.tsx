@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import JobPreviewContent from "@/components/JobPreviewContent";
 import { JobData } from "@/lib/types";
 import Link from "next/link";
+import { slugify } from "@/lib/utils";
 
 export default function JobModal({
   job,
@@ -37,7 +38,7 @@ export default function JobModal({
             <div className="h-px bg-border mx-0 shrink-0" />
             <DialogFooter className="p-6 flex gap-2 md:flex-row md:justify-between bg-background/80 backdrop-blur-sm">
               <Button asChild variant="secondary">
-                <Link href={`/job-details/${job.id}`}>View details</Link>
+                <Link href={`/job-details/${job.id}-${slugify(job.jobTitle || "")}`}>View details</Link>
               </Button>
               <Button asChild>
                 <a

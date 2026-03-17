@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,6 +10,7 @@ import {
 import { companyData } from "@/lib/types";
 import { Spline_Sans } from "next/font/google";
 import Link from "next/link";
+import Image from "next/image";
 import { HiOutlineBellAlert } from "react-icons/hi2";
 
 const spline_sans = Spline_Sans({ subsets: ["latin"], weight: "500" });
@@ -24,13 +25,19 @@ export default function CompanyCard({
       <CardHeader>
         <div className="flex gap-2 items-center mb-1">
           <Avatar>
-            <AvatarImage
-              src={companyInfo.companyLogo ? `${companyInfo.companyLogo}` : ""}
-              alt={`${companyInfo.companyName} logo`}
-            />
-            <AvatarFallback>
-              {companyInfo.companyName[0].toUpperCase()}
-            </AvatarFallback>
+            {companyInfo.companyLogo ? (
+              <Image
+                src={companyInfo.companyLogo}
+                alt={`${companyInfo.companyName} logo`}
+                fill
+                sizes="40px"
+                className="object-cover"
+              />
+            ) : (
+              <AvatarFallback>
+                {companyInfo.companyName[0].toUpperCase()}
+              </AvatarFallback>
+            )}
           </Avatar>
           <CardTitle className={`${spline_sans.className} tracking-wide`}>
             {companyInfo.companyName}

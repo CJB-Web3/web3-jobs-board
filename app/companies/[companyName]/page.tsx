@@ -1,7 +1,7 @@
 import CompanyCard from "@/components/CompanyCard";
 import RichTextContent from "@/components/RichTextContent";
 import JobCard from "@/components/JobCard";
-import { getCompanyJobs, getSimilarCompanies } from "@/lib/jobs";
+import { getCompanyJobs, getLiveCompanies, getSimilarCompanies } from "@/lib/jobs";
 import { Building2, Globe, LucideBellDot, MailIcon } from "lucide-react";
 import { Righteous } from "next/font/google";
 import Image from "next/image";
@@ -20,6 +20,13 @@ const righteous_font = Righteous({
 type PageProps = {
   params: Promise<{ companyName: string }>;
 };
+
+export async function generateStaticParams() {
+  const companies = await getLiveCompanies();
+  return companies.map((company) => ({
+    companyName: company.companyName.replaceAll(" ", "_"),
+  }));
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { companyName } = await params;
@@ -163,6 +170,7 @@ export default async function Page({
                 className="object-cover rounded-full border w-28 h-28 sm:w-40 sm:h-40 lg:w-56 lg:h-56"
                 alt={`${companyJobs[0].companyName} logo`}
                 priority
+                referrerPolicy="no-referrer"
               />
             ) : (
               <div className="rounded-full border w-28 h-28 sm:w-40 sm:h-40 lg:w-56 lg:h-56 bg-muted" />

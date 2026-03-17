@@ -1,9 +1,11 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { JobData } from "@/lib/types";
-import { formatDistanceFromNow, formatSalaryCurrency } from "@/lib/utils";
+import { formatDistanceFromNow, formatSalaryCurrency, slugify } from "@/lib/utils";
 import { CalendarClock, CircleDollarSign, MapPin, Wifi } from "lucide-react";
 import JobModal from "./JobModal";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function JobCard({
   job,
@@ -33,53 +35,63 @@ export default function JobCard({
 
   if (job.featured) {
     return (
-      <article className="group relative transition-all duration-200 bg-[#FFFAF9] dark:bg-[#1c0808] border-l-4 border-l-[#CC0000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_0_#CC0000]">
+      <article className="group relative flex transition-all duration-200 bg-[#FFFDF8] dark:bg-[#180505] shadow-[0_4px_28px_rgba(204,0,0,0.09)] dark:shadow-[0_4px_28px_rgba(204,0,0,0.25)] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#CC0000]">
 
-        {/* Red header stripe */}
-        <div className="bg-[#CC0000] px-4 sm:px-6 lg:px-8 py-1.5 flex items-center gap-3">
-          <span className="font-sans text-[9px] font-bold uppercase tracking-[0.35em] text-white">
-            ★ Featured Listing
-          </span>
-          <span className="h-px flex-1 bg-white/25" />
-          <span className="font-sans text-[9px] uppercase tracking-[0.25em] text-white/60">
-            Sponsored
+        {/* Left ribbon */}
+        <div className="flex-shrink-0 w-9 sm:w-10 bg-[#CC0000] flex items-center justify-center">
+          <span
+            className="font-sans text-[7px] font-bold uppercase tracking-[0.55em] text-white select-none whitespace-nowrap"
+            style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+          >
+            ★ Featured
           </span>
         </div>
 
-        <div className="px-4 sm:px-6 lg:px-8 py-6">
+        {/* Main content */}
+        <div className="flex-1 min-w-0 px-4 sm:px-6 lg:px-7 py-6 sm:py-7">
           <div className="flex flex-col sm:flex-row sm:items-start gap-5">
 
-            {/* Logo — larger, always full colour */}
+            {/* Logo */}
             <div className="flex-shrink-0">
               <Avatar className="h-16 w-16">
-                <AvatarImage
-                  src={job.companyLogo || undefined}
-                  alt={job.companyName}
-                />
-                <AvatarFallback className="font-headline font-black text-xl bg-[#CC0000] text-white">
-                  {job.companyName?.[0]}
-                </AvatarFallback>
+                {job.companyLogo ? (
+                  <Image
+                    src={job.companyLogo}
+                    alt={`${job.companyName} logo`}
+                    fill
+                    sizes="64px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <AvatarFallback className="font-headline font-black text-xl bg-[#CC0000] text-white">
+                    {job.companyName?.[0]}
+                  </AvatarFallback>
+                )}
               </Avatar>
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
 
-              {/* Role label — in red */}
+              {/* Role label */}
               {job.role && (
-                <p className="font-sans text-[9px] font-bold uppercase tracking-[0.3em] text-[#CC0000] dark:text-[#ff6666] mb-1">
+                <p className="font-sans text-[9px] font-bold uppercase tracking-[0.3em] text-[#CC0000] dark:text-[#ff6666] mb-1.5">
                   {job.role}
                 </p>
               )}
 
               {/* Title */}
               <h3 className="font-headline text-3xl sm:text-4xl font-black leading-tight uppercase mb-1 text-foreground transition-all duration-200 group-hover:underline decoration-2 underline-offset-2">
-                {job.jobTitle}
+                <Link href={`/job-details/${job.id}-${slugify(job.jobTitle || "")}`} className="hover:text-[#CC0000] focus:outline-none focus:ring-2 focus:ring-[#CC0000] focus:ring-offset-2">
+                  {job.jobTitle}
+                </Link>
               </h3>
 
               {/* Company */}
-              <p className="font-sans text-base font-bold mb-3 text-foreground">
-                {job.companyName}
+              <p className="font-sans text-base font-bold mb-3 text-foreground hover:underline">
+                <Link href={`/companies/${encodeURIComponent(job.companyName?.replaceAll(" ", "_") || "")}`}>
+                  {job.companyName}
+                </Link>
               </p>
 
               {/* Metadata */}
@@ -147,15 +159,20 @@ export default function JobCard({
           {/* Logo */}
           <div className="flex-shrink-0">
               <Avatar className="h-12 w-12">
-                <AvatarImage
-                  src={job.companyLogo || undefined}
-                  alt={job.companyName}
-                  className="grayscale group-hover:grayscale-0 transition-all duration-300"
-                />
-              <AvatarFallback className="font-headline font-black text-lg bg-secondary text-foreground">
-                {job.companyName?.[0]}
-              </AvatarFallback>
-            </Avatar>
+                {job.companyLogo ? (
+                  <Image
+                    src={job.companyLogo}
+                    alt={`${job.companyName} logo`}
+                    fill
+                    sizes="48px"
+                    className="object-cover transition-all duration-300"
+                  />
+                ) : (
+                  <AvatarFallback className="font-headline font-black text-lg bg-secondary text-foreground">
+                    {job.companyName?.[0]}
+                  </AvatarFallback>
+                )}
+              </Avatar>
           </div>
 
           {/* Content */}
@@ -167,11 +184,15 @@ export default function JobCard({
             )}
 
             <h3 className="font-headline text-2xl sm:text-3xl font-black leading-tight uppercase mb-1 text-foreground transition-all duration-200 group-hover:underline decoration-2 underline-offset-2">
-              {job.jobTitle}
+              <Link href={`/job-details/${job.id}-${slugify(job.jobTitle || "")}`} className="hover:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2">
+                {job.jobTitle}
+              </Link>
             </h3>
 
-            <p className="font-sans text-base font-semibold mb-3 text-foreground/80">
-              {job.companyName}
+            <p className="font-sans text-base font-semibold mb-3 text-foreground/80 hover:underline">
+              <Link href={`/companies/${encodeURIComponent(job.companyName?.replaceAll(" ", "_") || "")}`}>
+                {job.companyName}
+              </Link>
             </p>
 
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm font-sans text-foreground/70 mb-3">

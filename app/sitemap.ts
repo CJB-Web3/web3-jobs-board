@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { getJobListings, getLiveCompanies } from "@/lib/jobs";
+import { slugify } from "@/lib/utils";
 
 const SITE_URL = "https://www.web3jobsboard.com";
 const STATIC_ROUTES: MetadataRoute.Sitemap = [
@@ -37,7 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ]);
 
     const jobRoutes: MetadataRoute.Sitemap = jobs.map((job) => ({
-      url: `${SITE_URL}/job-details/${job.id}`,
+      url: `${SITE_URL}/job-details/${job.id}-${slugify(job.jobTitle || "")}`,
       lastModified: job.created_at ? new Date(job.created_at) : new Date(),
       changeFrequency: "weekly",
       priority: 0.9,

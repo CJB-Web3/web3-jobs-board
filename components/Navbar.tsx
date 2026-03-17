@@ -48,7 +48,7 @@ export default function Navbar() {
       <nav className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14">
           {/* Logo */}
-          <Link href="/" className="flex items-baseline gap-2 group">
+          <Link href="/" className="flex items-baseline gap-2 group" aria-label="Web3 Jobs Board Home" title="Web3 Jobs Board Home">
             <span className={`${audiowide.className} font-extrabold tracking-wider text-3xl`}>
               WJB
             </span>
@@ -59,24 +59,32 @@ export default function Navbar() {
             <Link
               href="/#availableJobs"
               onClick={handleJobsClick}
+              aria-label="Browse Available Web3 Jobs"
+              title="Browse Web3 Jobs"
               className="px-5 py-2 font-sans text-xs font-semibold uppercase tracking-widest transition-all duration-200 hover:bg-foreground hover:text-background"
             >
               Jobs
             </Link>
             <Link
               href="/companies"
+              aria-label="View Web3 Companies"
+              title="Web3 Companies"
               className="px-5 py-2 font-sans text-xs font-semibold uppercase tracking-widest transition-all duration-200 hover:bg-foreground hover:text-background"
             >
               Companies
             </Link>
             <Link
               href="/pricing"
+              aria-label="View Pricing Plans"
+              title="Pricing"
               className="px-5 py-2 font-sans text-xs font-semibold uppercase tracking-widest transition-all duration-200 hover:bg-foreground hover:text-background"
             >
               Pricing
             </Link>
             <Link
               href="/post-job"
+              aria-label="Post a Web3 Job"
+              title="Post a Job"
               className="px-5 py-2 font-sans text-xs font-semibold uppercase tracking-widest bg-foreground text-background transition-all duration-200 hover:bg-[#CC0000] hover:text-white"
             >
               Post a Job

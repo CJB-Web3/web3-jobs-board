@@ -69,6 +69,7 @@ async function Page() {
       </div>
 
       <Suspense fallback={<Spinner />}>
+        <h2 className="sr-only">Company List</h2>
         <div className="grid xl:grid-cols-2 grid-cols-1 gap-6">
           {companies?.map((company, id) => (
             <CompanyCard key={id} companyInfo={company} />

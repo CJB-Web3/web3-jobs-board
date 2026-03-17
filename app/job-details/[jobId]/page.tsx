@@ -1,5 +1,6 @@
 import JobDetails from "@/components/JobDetails";
-import { getPublicJobById } from "@/lib/jobs";
+import { getJobListings, getPublicJobById } from "@/lib/jobs";
+import { slugify } from "@/lib/utils";
 import { Metadata } from "next";
 import Script from "next/script";
 
@@ -9,13 +10,21 @@ type PageProps = {
   params: Promise<{ jobId: string }>;
 };
 
+export async function generateStaticParams() {
+  const jobs = await getJobListings();
+  return jobs.map((job) => ({
+    jobId: `${job.id}-${slugify(job.jobTitle || "")}`,
+  }));
+}
+
 function stripHtml(html: string): string {
   return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { jobId } = await params;
-  const job = await getPublicJobById(Number(jobId));
+  const parsedJobId = parseInt(jobId, 10);
+  const job = await getPublicJobById(parsedJobId);
 
   if (!job) {
     return { title: "Job Not Found" };
@@ -28,16 +37,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     : "web3 jobs, blockchain jobs, crypto jobs";
 
   const ogImage = job.companyLogo || `${SITE_URL}/og-image.png`;
+  const jobUrl = `${SITE_URL}/job-details/${job.id}-${slugify(job.jobTitle || "")}`;
 
   return {
     title: `${job.jobTitle} at ${job.companyName} | Web3 Jobs Board`,
     description,
     keywords: jobKeywords,
-    alternates: { canonical: `${SITE_URL}/job-details/${job.id}` },
+    alternates: { canonical: jobUrl },
     openGraph: {
       title: `${job.jobTitle} at ${job.companyName}`,
       description,
-      url: `${SITE_URL}/job-details/${job.id}`,
+      url: jobUrl,
       siteName: "Web3 Jobs Board",
       images: [{ url: ogImage, width: 1200, height: 630, alt: `${job.jobTitle} at ${job.companyName}` }],
       type: "article",
@@ -56,7 +66,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function Page({ params }: PageProps) {
   const { jobId } = await params;
-  const job = await getPublicJobById(Number(jobId));
+  const parsedJobId = parseInt(jobId, 10);
+  const job = await getPublicJobById(parsedJobId);
+
+  const jobUrl = job ? `${SITE_URL}/job-details/${job.id}-${slugify(job.jobTitle || "")}` : "";
 
   const breadcrumbLd = {
     "@context": "https://schema.org",
@@ -70,7 +83,7 @@ export default async function Page({ params }: PageProps) {
               "@type": "ListItem",
               position: 3,
               name: `${job.jobTitle} at ${job.companyName}`,
-              item: `${SITE_URL}/job-details/${job.id}`,
+              item: jobUrl,
             },
           ]
         : []),
@@ -134,7 +147,7 @@ export default async function Page({ params }: PageProps) {
               },
             }
           : undefined,
-        url: `${SITE_URL}/job-details/${job.id}`,
+        url: jobUrl,
       }
     : null;
 

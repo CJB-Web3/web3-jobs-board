@@ -6,6 +6,7 @@ import JobsSection from "@/components/JobsSection";
 import SpinnerJobs from "@/components/SpinnerJobs";
 import { getJobKeywords, getJobListings } from "@/lib/jobs";
 import { Metadata } from "next";
+import { slugify } from "@/lib/utils";
 
 const SITE_URL = "https://www.web3jobsboard.com";
 
@@ -83,50 +84,7 @@ export default async function Page() {
     itemListElement: jobs.map((job, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      url: `${SITE_URL}/job-details/${job.id}`,
-      item: {
-        "@type": "JobPosting",
-        title: job.jobTitle,
-        datePosted: job.created_at,
-        employmentType: [
-          job.fullTime && "FULL_TIME",
-          job.partTime && "PART_TIME",
-          job.freelance && "CONTRACTOR",
-          job.internship && "INTERN",
-        ]
-          .filter(Boolean)
-          .join(", "),
-        jobLocation: {
-          "@type": "Place",
-          address: {
-            "@type": "PostalAddress",
-            addressRegion:
-              job.jobLocation === "remote"
-                ? "Remote"
-                : job.locationDetails || job.jobLocation,
-          },
-        },
-        hiringOrganization: {
-          "@type": "Organization",
-          name: job.companyName,
-          sameAs: job.companyWebsite,
-          logo: job.companyLogo,
-        },
-        employmentLocationType: job.jobLocation?.toUpperCase(),
-        description: job.jobDescription ?? undefined,
-        baseSalary: job.minSalary
-          ? {
-              "@type": "MonetaryAmount",
-              currency: job.salaryCurrency,
-              value: {
-                "@type": "QuantitativeValue",
-                minValue: Number(job.minSalary),
-                maxValue: Number(job.maxSalary),
-                unitText: "YEAR",
-              },
-            }
-          : undefined,
-      },
+      url: `${SITE_URL}/job-details/${job.id}-${slugify(job.jobTitle || "")}`,
     })),
   };
 

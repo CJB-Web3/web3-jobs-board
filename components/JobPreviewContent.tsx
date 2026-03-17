@@ -88,6 +88,7 @@ export default function JobPreviewContent({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={job.companyLogo}
+              referrerPolicy="no-referrer"
               alt={job.companyName || ""}
               className="h-full w-full object-contain"
             />
@@ -98,7 +99,7 @@ export default function JobPreviewContent({
           )}
         </div>
         <div>
-          <h2 className="font-headline text-4xl text-foreground">
+          <h2 className="font-headline text-3xl sm:text-4xl font-black uppercase leading-tight text-foreground">
             {job.companyName}
           </h2>
           {job.role && (
